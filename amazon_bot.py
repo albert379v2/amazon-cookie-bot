@@ -1,3 +1,4 @@
+import time
 import os
 import json
 import asyncio
@@ -168,4 +169,16 @@ def run_cmd(message):
 
 if __name__ == "__main__":
     send_log("🔥 Bot iniciado correctamente en Railway")
-    bot.infinity_polling()
+
+    bot.remove_webhook()
+    time.sleep(2)
+
+    while True:
+        try:
+            bot.infinity_polling(
+                timeout=30,
+                long_polling_timeout=30
+            )
+        except Exception as e:
+            print(f"Polling Error: {e}")
+            time.sleep(5)
