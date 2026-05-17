@@ -45,10 +45,12 @@ def send_log(msg):
         bot.send_message(CHAT_ID, f"🤖 {msg}", parse_mode="Markdown")
     except:
         pass
-
+        
 def send_screenshot(page, name):
     try:
-        path = f"{name}.png"
+        os.makedirs("/tmp", exist_ok=True)
+
+        path = f"/tmp/{name}.png"
         page.screenshot(path=path, full_page=True)
 
         with open(path, "rb") as img:
