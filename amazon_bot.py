@@ -11,7 +11,7 @@ import time
 from playwright.async_api import async_playwright
 
 
-# === CONFIGURACIÃ“N ===
+# === CONFIGURACIÓN ===
 TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 AC_KEY = os.getenv("AC_KEY")
@@ -41,7 +41,7 @@ bot = telebot.TeleBot(TOKEN)
 
 def send_log(msg):
     print(msg)
-    try: bot.send_message(CHAT_ID, f"ðŸ¤– {msg}", parse_mode="Markdown")
+    try: bot.send_message(CHAT_ID, f"🤖 {msg}", parse_mode="Markdown")
     except: pass
 
 # --- MANEJO DE CORREO (MAIL.TM API) ---
@@ -69,11 +69,11 @@ class MailTM:
             self.session.headers.update({"Authorization": f"Bearer {self.token}"})
             return self.address
         except Exception as e:
-            send_log(f"âŒ Error Mail.tm: {e}")
+            send_log(f"❌ Error Mail.tm: {e}")
             return None
 
     async def wait_for_otp(self):
-        send_log("ðŸ“© Esperando OTP en Mail.tm...")
+        send_log("📩 Esperando OTP en Mail.tm...")
         for _ in range(20):
             await asyncio.sleep(8)
             try:
@@ -110,7 +110,7 @@ async def solve_captcha(page):
             }).json()
             if res.get("status") == "ready":
                 text = res["solution"]["text"]
-                send_log(f"âœ… Captcha: `{text}`")
+                send_log(f"✅ Captcha: `{text}`")
                 await page.fill("#captchacharacters", text)
                 await page.press("#captchacharacters", "Enter")
                 return True
@@ -133,7 +133,7 @@ async def create_amazon():
             context = await browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0")
             page = await context.new_page()
 
-            send_log(f"ðŸš€ Creando: `{email}`")
+            send_log(f"🚀 Creando: `{email}`")
             send_log("E7 - Entrando a Amazon")
             await page.goto(
     "https://www.amazon.com.mx/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com.mx%2F%3F_encoding%3DUTF8%26ref_%3Dnavm_hdr_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=anywhere_v2_mx&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0",
@@ -143,7 +143,7 @@ async def create_amazon():
             send_log(page.url)
             await page.screenshot(path="debug.png")
 
-            send_log("E8 - Amazon cargÃ³")
+            send_log("E8 - Amazon cargó")
             await solve_captcha(page)
             send_log("E9 - tiene captcha 1")
             
@@ -172,7 +172,7 @@ async def create_amazon():
 
             otp = await mail_service.wait_for_otp()
             if otp:
-                send_log(f"ðŸ”¢ OTP: `{otp}`")
+                send_log(f"🔢 OTP: `{otp}`")
                 await page.fill("input[name='code']", otp)
                 await page.click("#cvf-submit-otp-button")
                 await page.wait_for_timeout(11000)
@@ -180,11 +180,11 @@ async def create_amazon():
                 cookies = await context.cookies()
                 with open("session.json", "w") as f: json.dump(cookies, f)
                 with open("session.json", "rb") as f:
-                    bot.send_document(CHAT_ID, f, caption=f"âœ… Amazon Creada: {email}")
+                    bot.send_document(CHAT_ID, f, caption=f"✅ Amazon Creada: {email}")
             else:
-                send_log("âŒ OTP no recibido.")
+                send_log("❌ OTP no recibido.")
         except Exception as e:
-            send_log(f"âš ï¸ Error: {str(e)}")
+            send_log(f"⚠️ Error: {str(e)}")
         finally:
             await browser.close()
 
@@ -195,9 +195,9 @@ def start_cmd(message):
 
 @bot.message_handler(commands=['crear'])
 def run_cmd(message):
-    bot.reply_to(message, "âš™ï¸ Iniciando proceso...")
+    bot.reply_to(message, "⚙️ Iniciando proceso...")
     asyncio.run(create_amazon())
 
 if __name__ == "__main__":
-    send_log("ðŸ”¥ Bot iniciado correctamente en Railway")
+    send_log("🔥 Bot iniciado correctamente en Railway")
     bot.infinity_polling()
