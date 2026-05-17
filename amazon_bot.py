@@ -93,7 +93,7 @@ async def solve_captcha(page):
         if not captcha_img: return False
         
         img_url = await captcha_img.get_attribute("src")
-        img_res = requests.get(img_url, timeout=30)
+        img_res = requests.get(img_url, timeout=31)
         img_b64 = base64.b64encode(img_res.content).decode('utf-8')
 
         task = requests.post("https://api.anti-captcha.com/createTask", json={
@@ -145,7 +145,7 @@ async def create_amazon():
                 send_log(f"🔢 OTP: `{otp}`")
                 await page.fill("input[name='code']", otp)
                 await page.click("#cvf-submit-otp-button")
-                await page.wait_for_timeout(10000)
+                await page.wait_for_timeout(11000)
                 
                 cookies = await context.cookies()
                 with open("session.json", "w") as f: json.dump(cookies, f)
