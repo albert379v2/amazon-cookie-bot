@@ -117,10 +117,14 @@ async def solve_captcha(page):
 
 # --- FLUJO DE REGISTRO ---
 async def create_amazon():
+    send_log("E1 - Inicializando MailTM")
     mail_service = MailTM()
+    send_log("E2 - Obteniendo correo")
     email = mail_service.get_account()
-    if not email: return
-
+    if not email: 
+        send_log("ERR_MAIL_01")
+        return
+        send_log(f"E3 - Correo creado: {email}")
     async with async_playwright() as p:
         try:
             browser = await p.chromium.launch(headless=True, proxy=PROXY_CONFIG)
