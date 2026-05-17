@@ -133,8 +133,7 @@ async def create_amazon():
 
             send_log(f"🚀 Creando: `{email}`")
             send_log("E7 - Entrando a Amazon")
-
-await page.goto(
+            await page.goto(
     "https://www.amazon.com/ap/register",
     wait_until="domcontentloaded",
     timeout=120000
