@@ -20,7 +20,6 @@ PROXY_PASS = os.getenv("PROXY_PASS")
 
 print("TOKEN:", TOKEN)
 print("CHAT_ID:", CHAT_ID)
-print("AC_KEY:", AC_KEY)
 print("PROXY_ADDR:", PROXY_ADDR)
 print("PROXY_USER:", PROXY_USER)
 print("PROXY_PASS:", PROXY_PASS)
