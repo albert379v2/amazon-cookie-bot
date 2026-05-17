@@ -39,6 +39,38 @@ REQUESTS_PROXIES = {
 
 bot = telebot.TeleBot(TOKEN)
 
+DEBUG_DIR = "debug"
+os.makedirs(DEBUG_DIR, exist_ok=True)
+
+def safe_name(name: str) -> str:
+    return (
+        name.replace("/", "_")
+            .replace(" ", "_")
+            .replace(":", "_")
+            .replace("?", "_")
+            .replace("=", "_")
+    )
+    
+async def take_screenshot(page, step: str):
+    path = os.path.join(DEBUG_DIR, f"{safe_name(step)}.png")
+
+    await page.screenshot(
+        path=path,
+        full_page=True
+    )
+
+    return path
+
+def send_screenshot(path: str, caption: str):
+    with open(path, "rb") as img:
+        bot.send_photo(CHAT_ID, img, caption=caption)
+async def debug(page, step: str):
+    try:
+        path = await take_screenshot(page, step)
+        send_screenshot(path, f"📸 {step}")
+    except Exception as e:
+        print(f"Screenshot error: {e}")
+
 def send_log(msg):
     print(msg)
     try: bot.send_message(CHAT_ID, f"🤖 {msg}", parse_mode="Markdown")
@@ -135,13 +167,14 @@ async def create_amazon():
 
             send_log(f"🚀 Creando: `{email}`")
             send_log("E7 - Entrando a Amazon")
+            await debug(page, "0create_mail")
             await page.goto(
     "https://www.amazon.com.mx/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com.mx%2F%3F_encoding%3DUTF8%26ref_%3Dnavm_hdr_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=anywhere_v2_mx&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0",
     wait_until="domcontentloaded",
     timeout=120000
 )
             send_log(page.url)
-            await page.screenshot(path="debug.png")
+            await debug(page, "amazon_link")
 
             send_log("E8 - Amazon cargó")
             await solve_captcha(page)
