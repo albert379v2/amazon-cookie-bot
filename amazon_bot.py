@@ -39,6 +39,13 @@ REQUESTS_PROXIES = {
 
 bot = telebot.TeleBot(TOKEN)
 
+def send_screenshot(page, name):
+    path = f"{name}.png"
+    page.screenshot(path=path)
+
+    with open(path, "rb") as img:
+        bot.send_photo(CHAT_ID, img, caption=f"📸 {name}")
+
 def send_log(msg):
     print(msg)
     try: bot.send_message(CHAT_ID, f"🤖 {msg}", parse_mode="Markdown")
@@ -153,6 +160,9 @@ async def create_amazon():
             """, timeout=30000)
             send_log(page.url)
             await page.screenshot(path="debug.png")
+            await page.goto(url)
+            send_log("🌐 Página cargada")
+            send_screenshot(page, "after_goto")
 
             send_log("E8 - Amazon cargó")
             await solve_captcha(page)
