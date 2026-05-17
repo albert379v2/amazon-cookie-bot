@@ -180,6 +180,9 @@ async def create_amazon():
     wait_until="domcontentloaded",
     timeout=120000
 )
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_timeout(2000)
+            
             send_log(page.url)
             await debug(page, "amazon_link")
 
@@ -192,9 +195,13 @@ async def create_amazon():
             await debug(page, "01_insert_email")
             send_log("F2")
             await page.click("#continue")
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_timeout(2000)
             await debug(page, "01_click_continue")
             send_log("F2 vontinue1")
             await page.click("#intention-submit-button")
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_timeout(2000)
             await debug(page, "01_click_comfirregister")
             send_log("Fllemar datos")
             await page.fill("#ap_customer_name", f"Zeus {random.randint(10,99)}")            
@@ -204,6 +211,8 @@ async def create_amazon():
             send_log("F4")
             ##await page.fill("#ap_password_check", "Admin.2026.!")
             send_log("F5 inicia click")
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_timeout(2000)
             await page.click("#continue")
             ##await page.click("#continue")
             send_log("F6 click exitoso")
