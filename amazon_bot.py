@@ -10,14 +10,13 @@ import time
 from playwright.async_api import async_playwright
 
 # === CONFIGURACIÓN ===
-TOKEN = "8461610558:AAG9_DipzDcqmWYmAbb-LucReBzsI4-t_bE"
-CHAT_ID = "8191397359"
-AC_KEY = "37f2bc34098021f0fcb8ed61cc7b3782"
+TOKEN = os.getenv("BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
+AC_KEY = os.getenv("AC_KEY")
 
-# Tu Proxy Premium
-PROXY_ADDR = "31.59.20.176:6754"
-PROXY_USER = "hyqgyxhf"
-PROXY_PASS = "30z9ho40bxvp"
+PROXY_ADDR = os.getenv("PROXY_ADDR")
+PROXY_USER = os.getenv("PROXY_USER")
+PROXY_PASS = os.getenv("PROXY_PASS")
 
 PROXY_CONFIG = {
     "server": f"http://{PROXY_ADDR}",
