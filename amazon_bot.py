@@ -150,6 +150,8 @@ async def create_amazon():
             send_log("F2")
             await page.click("#continue")
             send_log("F2 vontinue1")
+            await page.click("#continue")
+            send_log("Fllemar datos")
             await page.fill("#ap_customer_name", f"Zeus {random.randint(10,99)}")            
             send_log("F3")
             await page.fill("#ap_password", "Admin.2026.!")
