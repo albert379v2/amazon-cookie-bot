@@ -132,7 +132,15 @@ async def create_amazon():
             page = await context.new_page()
 
             send_log(f"🚀 Creando: `{email}`")
-            await page.goto("https://www.amazon.com/ap/register", timeout=60000)
+            send_log("E7 - Entrando a Amazon")
+
+await page.goto(
+    "https://www.amazon.com/ap/register",
+    wait_until="domcontentloaded",
+    timeout=120000
+)
+
+send_log("E8 - Amazon cargó")
             await solve_captcha(page)
 
             await page.fill("#ap_customer_name", f"Zeus {random.randint(10,99)}")
