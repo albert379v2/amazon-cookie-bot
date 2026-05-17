@@ -141,15 +141,17 @@ async def create_amazon():
 
             send_log("E8 - Amazon cargó")
             await solve_captcha(page)
-
+            send_log("E9 - tiene captcha 1")
+            
             await page.fill("#ap_customer_name", f"Zeus {random.randint(10,99)}")
             await page.fill("#ap_email", email)
             await page.fill("#ap_password", "Admin.2026.!")
             await page.fill("#ap_password_check", "Admin.2026.!")
             await page.click("#continue")
-            
+            send_log("E8 - se lleno formulario")
             await asyncio.sleep(5)
             await solve_captcha(page)
+            send_log("E8 - captcha2")
 
             otp = await mail_service.wait_for_otp()
             if otp:
@@ -157,7 +159,7 @@ async def create_amazon():
                 await page.fill("input[name='code']", otp)
                 await page.click("#cvf-submit-otp-button")
                 await page.wait_for_timeout(11000)
-                
+                send_log("E8 - se obtuvo codigo")
                 cookies = await context.cookies()
                 with open("session.json", "w") as f: json.dump(cookies, f)
                 with open("session.json", "rb") as f:
