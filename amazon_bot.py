@@ -102,6 +102,19 @@ class MailTM:
         send_log(f"❌ Error Mail.tm: {e}")
         return None
 
+async def wait_for_otp(self):
+        send_log("📩 Esperando OTP en Mail.tm...")
+        for _ in range(20):
+            await asyncio.sleep(8)
+            try:
+                msgs = self.session.get(f"{self.api}/messages").json()['hydra:member']
+                if msgs:
+                    msg_id = msgs[0]['id']
+                    content = self.session.get(f"{self.api}/messages/{msg_id}").json()['text']
+                    otp = re.search(r'(\d{6})', content)
+                    if otp: return otp.group(1)
+            except: continue
+        return None
 # --- RESOLUTOR DE CAPTCHA ---
 async def solve_captcha(page):
     try:
