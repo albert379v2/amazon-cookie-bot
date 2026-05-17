@@ -39,6 +39,13 @@ REQUESTS_PROXIES = {
 
 bot = telebot.TeleBot(TOKEN)
 
+def send_log(msg):
+    print(msg)
+    try:
+        bot.send_message(CHAT_ID, f"🤖 {msg}", parse_mode="Markdown")
+    except:
+        pass
+
 def send_screenshot(page, name):
     try:
         path = f"{name}.png"
