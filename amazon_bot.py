@@ -60,7 +60,7 @@ class MailTM:
             self.address = f"zeus{random.randint(1000,9999)}@{domain}"
             res = self.session.post(f"{self.api}/accounts", json={
                 "address": self.address, "password": self.password
-            }, timeout=30)
+            }, timeout=25)
             
             auth = self.session.post(f"{self.api}/token", json={
                 "address": self.address, "password": self.password
@@ -93,7 +93,7 @@ async def solve_captcha(page):
         if not captcha_img: return False
         
         img_url = await captcha_img.get_attribute("src")
-        img_res = requests.get(img_url, timeout=31)
+        img_res = requests.get(img_url, timeout=35)
         img_b64 = base64.b64encode(img_res.content).decode('utf-8')
 
         task = requests.post("https://api.anti-captcha.com/createTask", json={
