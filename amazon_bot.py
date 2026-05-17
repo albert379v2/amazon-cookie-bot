@@ -139,7 +139,7 @@ async def create_amazon():
     timeout=120000
 )
 
-send_log("E8 - Amazon cargó")
+            send_log("E8 - Amazon cargó")
             await solve_captcha(page)
 
             await page.fill("#ap_customer_name", f"Zeus {random.randint(10,99)}")
