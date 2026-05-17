@@ -194,17 +194,17 @@ async def create_amazon():
                                 with open("session.json", "rb") as f:
                                     bot.send_document(CHAT_ID, f, caption=f"✅ Cuenta creada: {email}")
                                     await browser.close()
-
-# --- BOT INTERFACE ---
-@bot.message_handler(commands=['start'])
-def start_cmd(message):
-    bot.reply_to(message, "ZeuS Bot Online. Usa /crear para una cuenta Amazon.")
-
-@bot.message_handler(commands=['crear'])
-def run_cmd(message):
-    bot.reply_to(message, "⚙️ Iniciando proceso...")
-    asyncio.run(create_amazon())
-
-if __name__ == "__main__":
-    send_log("🔥 Bot iniciado correctamente en Railway")
-    bot.infinity_polling()
+                                    
+                                    
+                                    @bot.message_handler(commands=['start'])
+                                    def start_cmd(message):
+                                        bot.reply_to(message, "ZeuS Bot Online. Usa /crear para una cuenta Amazon.")
+                                    
+                                    @bot.message_handler(commands=['crear'])
+                                    def run_cmd(message):
+                                        bot.reply_to(message, "⚙️ Iniciando proceso...")
+                                        asyncio.run(create_amazon())
+                                        
+                                        if __name__ == "__main__":
+                                            send_log("🔥 Bot iniciado correctamente en Railway")
+                                            bot.infinity_polling()
