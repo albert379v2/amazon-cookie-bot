@@ -138,20 +138,17 @@ async def create_amazon():
         return
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(
+        try:
+            browser = await p.chromium.launch(
             headless=False,  # importante para estabilidad en Amazon
             proxy=PROXY_CONFIG
-        )
-
-        context = await browser.new_context(
+            )
+            context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
             locale="es-MX"
         )
-
-        page = await context.new_page()
-
-        # 🟢 1. IR DIRECTO A REGISTRO
-        send_log("🌐 Abriendo registro Amazon")
+            page = await context.new_page()
+            send_log("🌐 Abriendo registro Amazon")
         await page.goto("https://www.amazon.com.mx/ap/register", wait_until="domcontentloaded")
 
         await page.wait_for_timeout(2000)
