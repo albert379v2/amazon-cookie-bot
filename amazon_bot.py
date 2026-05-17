@@ -161,6 +161,9 @@ async def create_amazon():
             else:
                 send_log("⚠️ Amazon no decidió flujo aún")
                 flow = "unknown"
+                if flow == "register":
+                    await page.fill("#ap_customer_name", "Test User")
+                    await page.fill("#ap_password", "Password123!")
             send_log("F2 vontinue1")
             await page.click("#intention-submit-button")
             send_log("Fllemar datos")
