@@ -207,4 +207,3 @@ async def create_amazon():
                                         
                                         if __name__ == "__main__":
                                             send_log("🔥 Bot iniciado correctamente en Railway")
-bot.infinity_polling()
