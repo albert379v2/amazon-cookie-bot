@@ -55,7 +55,7 @@ class MailTM:
         self.token = ""
 
     def get_account(self):
-    try:
+        try:
         send_log("📡 Obteniendo dominios MailTM")
 
         r = self.session.get(f"{self.api}/domains", timeout=20)
