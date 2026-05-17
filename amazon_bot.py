@@ -1,264 +1,204 @@
+import time
 import os
+import json
 import asyncio
 import random
+import re
 import telebot
+import requests
+import base64
+import time
 from playwright.async_api import async_playwright
 
-# =========================
-# CONFIG
-# =========================
+
+# === CONFIGURACIÓN ===
 TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
+AC_KEY = os.getenv("AC_KEY")
+
+PROXY_ADDR = os.getenv("PROXY_ADDR")
+PROXY_USER = os.getenv("PROXY_USER")
+PROXY_PASS = os.getenv("PROXY_PASS")
+
+print("TOKEN:", TOKEN)
+print("CHAT_ID:", CHAT_ID)
+print("PROXY_ADDR:", PROXY_ADDR)
+print("PROXY_USER:", PROXY_USER)
+print("PROXY_PASS:", PROXY_PASS)
+
+PROXY_CONFIG = {
+    "server": f"http://{PROXY_ADDR}",
+    "username": PROXY_USER,
+    "password": PROXY_PASS
+}
+
+REQUESTS_PROXIES = {
+    "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_ADDR}/",
+    "https": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_ADDR}/"
+}
 
 bot = telebot.TeleBot(TOKEN)
 
-# =========================
-# DEBUG DIR SAFE (RAILWAY OK)
-# =========================
-DEBUG_DIR = os.path.join(os.getcwd(), "debug")
-os.makedirs(DEBUG_DIR, exist_ok=True)
-
-
-# =========================
-# UTILS
-# =========================
-def safe_name(name: str) -> str:
-    return (
-        name.replace("/", "_")
-        .replace(" ", "_")
-        .replace(":", "_")
-        .replace("(", "_")
-        .replace(")", "_")
-    )
-
-
-def send_log(msg: str):
+def send_log(msg):
     print(msg)
-    try:
-        bot.send_message(CHAT_ID, f"🤖 {msg}")
-    except:
-        pass
+    try: bot.send_message(CHAT_ID, f"🤖 {msg}", parse_mode="Markdown")
+    except: pass
 
-
-def send_screenshot_file(path: str, caption: str):
-    try:
-        with open(path, "rb") as img:
-            bot.send_photo(CHAT_ID, img, caption=caption)
-    except Exception as e:
-        send_log(f"❌ send_photo error: {e}")
-
-
-# =========================
-# DEBUG CORE
-# =========================
-async def debug_screenshot(page, step: str):
-    try:
-        path = os.path.join(DEBUG_DIR, f"{safe_name(step)}.png")
-        await page.screenshot(path=path, full_page=True)
-        send_screenshot_file(path, f"📸 {step}")
-    except Exception as e:
-        send_log(f"❌ Screenshot error: {e}")
-
-
-async def debug_snapshot(page, step: str):
-    try:
-        # HTML dump correcto (NO coroutine error)
-        html = await page.content()
-
-        html_path = os.path.join(DEBUG_DIR, f"{safe_name(step)}.html")
-        with open(html_path, "w", encoding="utf-8") as f:
-            f.write(html)
-
-        send_log(f"🌐 STEP: {step}")
-        send_log(f"🔗 URL: {page.url}")
-
-        await debug_screenshot(page, step)
-
-    except Exception as e:
-        send_log(f"❌ Snapshot error: {e}")
-
-
-# =========================
-# MAIL MOCK (placeholder estable)
-# =========================
+# --- MANEJO DE CORREO (MAIL.TM API) ---
 class MailTM:
+    def __init__(self):
+        self.api = "https://api.mail.tm"
+        self.session = requests.Session()
+        #self.session.proxies = REQUESTS_PROXIES
+        self.address = ""
+        self.password = "ZeusBot2026!"
+        self.token = ""
+
     def get_account(self):
-        return f"zeus{random.randint(1000,9999)}@mail.tm"
+        try:
+            domain = self.session.get(f"{self.api}/domains").json()['hydra:member'][0]['domain']
+            self.address = f"zeus{random.randint(1000,9999)}@{domain}"
+            res = self.session.post(f"{self.api}/accounts", json={
+                "address": self.address, "password": self.password
+            }, timeout=25)
+            
+            auth = self.session.post(f"{self.api}/token", json={
+                "address": self.address, "password": self.password
+            }).json()
+            self.token = auth['token']
+            self.session.headers.update({"Authorization": f"Bearer {self.token}"})
+            return self.address
+        except Exception as e:
+            send_log(f"❌ Error Mail.tm: {e}")
+            return None
 
     async def wait_for_otp(self):
-        send_log("📩 Esperando OTP...")
-        await asyncio.sleep(5)
-        return "123456"
+        send_log("📩 Esperando OTP en Mail.tm...")
+        for _ in range(20):
+            await asyncio.sleep(8)
+            try:
+                #msgs_data = self.session.get(f"{self.api}/messages").json()
+                #send_log(str(msgs_data))
+                msgs = self.session.get(f"{self.api}/messages").json()['hydra:member']
+                if msgs:
+                    msg_id = msgs[0]['id']
+                    content = self.session.get(f"{self.api}/messages/{msg_id}").json()['text']
+                    otp = re.search(r'(\d{6})', content)
+                    if otp: return otp.group(1)
+            except: continue
+        return None
 
+# --- RESOLUTOR DE CAPTCHA ---
+async def solve_captcha(page):
+    try:
+        captcha_img = await page.query_selector('img[src*="captcha"]')
+        if not captcha_img: return False
+        
+        img_url = await captcha_img.get_attribute("src")
+        img_res = requests.get(img_url, timeout=35)
+        img_b64 = base64.b64encode(img_res.content).decode('utf-8')
 
-# =========================
-# STATE MACHINE
-# =========================
-STATE_INIT = "INIT"
-STATE_OPEN = "OPEN"
-STATE_EMAIL = "EMAIL"
-STATE_ROUTE = "ROUTE"
-STATE_REGISTER = "REGISTER"
-STATE_LOGIN = "LOGIN"
-STATE_OTP = "OTP"
-STATE_DONE = "DONE"
-STATE_ERROR = "ERROR"
+        task = requests.post("https://api.anti-captcha.com/createTask", json={
+            "clientKey": AC_KEY, "task": {"type": "ImageToTextTask", "body": img_b64}
+        }).json()
+        
+        task_id = task.get("taskId")
+        for _ in range(15):
+            await asyncio.sleep(3)
+            res = requests.post("https://api.anti-captcha.com/getTaskResult", json={
+                "clientKey": AC_KEY, "taskId": task_id
+            }).json()
+            if res.get("status") == "ready":
+                text = res["solution"]["text"]
+                send_log(f"✅ Captcha: `{text}`")
+                await page.fill("#captchacharacters", text)
+                await page.press("#captchacharacters", "Enter")
+                return True
+    except: pass
+    return False
 
-
-class AmazonStateMachine:
-    def __init__(self, page, mail):
-        self.page = page
-        self.mail = mail
-        self.state = STATE_INIT
-        self.email = None
-
-    def set_state(self, state):
-        self.state = state
-        send_log(f"🔁 STATE → {state}")
-
-    async def step(self, name, action):
-        try:
-            send_log(f"➡️ STEP: {name}")
-
-            await debug_snapshot(self.page, name)
-
-            result = await action()
-
-            await debug_snapshot(self.page, f"{name}_after")
-
-            return result
-
-        except Exception as e:
-            send_log(f"❌ ERROR STEP {name}: {e}")
-            await debug_snapshot(self.page, f"{name}_error")
-            self.set_state(STATE_ERROR)
-            raise
-
-
-    # =====================
-    async def open(self):
-        self.set_state(STATE_OPEN)
-
-        await self.step(
-            "goto",
-            lambda: self.page.goto(
-                "https://www.amazon.com.mx/ap/signin",
-                wait_until="domcontentloaded",
-                timeout=120000
-            )
-        )
-
-
-    # =====================
-    async def email(self):
-        self.set_state(STATE_EMAIL)
-
-        self.email = self.mail.get_account()
-
-        await self.step(
-            "fill_email",
-            lambda: self.page.fill("#ap_email, #ap_email_login", self.email)
-        )
-
-        await self.step(
-            "continue",
-            lambda: self.page.click("#continue")
-        )
-
-
-    # =====================
-    async def route(self):
-        self.set_state(STATE_ROUTE)
-
-        await self.page.wait_for_timeout(3000)
-
-        if await self.page.locator("#ap_password").count() > 0:
-            self.set_state(STATE_LOGIN)
-
-        elif await self.page.locator("#ap_customer_name").count() > 0:
-            self.set_state(STATE_REGISTER)
-
-        else:
-            self.set_state(STATE_ERROR)
-            send_log("⚠️ FLOW UNKNOWN")
-
-
-    # =====================
-    async def register(self):
-        if self.state != STATE_REGISTER:
-            return
-
-        await self.step(
-            "name",
-            lambda: self.page.fill("#ap_customer_name", f"User {random.randint(10,99)}")
-        )
-
-        await self.step(
-            "password",
-            lambda: self.page.fill("#ap_password", "Admin.2026.!")
-        )
-
-        await self.step(
-            "submit",
-            lambda: self.page.click("#auth-continue")
-        )
-
-
-    # =====================
-    async def otp(self):
-        self.set_state(STATE_OTP)
-
-        otp = await self.mail.wait_for_otp()
-
-        if not otp:
-            self.set_state(STATE_ERROR)
-            send_log("❌ OTP FAIL")
-            return
-
-        await self.step(
-            "otp_fill",
-            lambda: self.page.fill("input[name='code']", otp)
-        )
-
-        await self.step(
-            "otp_submit",
-            lambda: self.page.click("#cvf-submit-otp-button")
-        )
-
-        self.set_state(STATE_DONE)
-        send_log("✅ DONE")
-
-
-# =========================
-# RUNNER
-# =========================
-async def run():
-    send_log("🚀 START SYSTEM")
-
-    mail = MailTM()
-
+# --- FLUJO DE REGISTRO ---
+async def create_amazon():
+    send_log("E1 - Inicializando MailTM")
+    mail_service = MailTM()
+    send_log("E2 - Obteniendo correo")
+    email = mail_service.get_account()
+    if not email: 
+        send_log("ERR_MAIL_01")
+        return
+        send_log(f"E3 - Correo creado: {email}")
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context()
-        page = await context.new_page()
-
-        sm = AmazonStateMachine(page, mail)
-
         try:
-            await sm.open()
-            await sm.email()
-            await sm.route()
+            browser = await p.chromium.launch(headless=True, proxy=PROXY_CONFIG)
+            context = await browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0")
+            page = await context.new_page()
 
-            if sm.state == STATE_REGISTER:
-                await sm.register()
+            send_log(f"🚀 Creando: `{email}`")
+            send_log("E7 - Entrando a Amazon")
+            await page.goto(
+    "https://www.amazon.com.mx/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com.mx%2F%3F_encoding%3DUTF8%26ref_%3Dnavm_hdr_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=anywhere_v2_mx&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0",
+    wait_until="domcontentloaded",
+    timeout=120000
+)
+            send_log(page.url)
+            await page.screenshot(path="debug.png")
 
-            await sm.otp()
+            send_log("E8 - Amazon cargó")
+            await solve_captcha(page)
+            send_log("E9 - tiene captcha 1")
+            
+            send_log("F1")
+            await page.fill("#ap_email_login", email)
+            send_log("F2")
+            await page.click("#continue")
+            send_log("F2 vontinue1")
+            await page.click("#intention-submit-button")
+            send_log("Fllemar datos")
+            await page.fill("#ap_customer_name", f"Zeus {random.randint(10,99)}")            
+            send_log("F3")
+            await page.fill("#ap_password", "Admin.2026.!")
+            send_log("F4")
+            ##await page.fill("#ap_password_check", "Admin.2026.!")
+            send_log("F5 inicia click")
+            await page.click("#auth-continue")
+            ##await page.click("#continue")
+            send_log("F6 click exitoso")
+            send_log("E8 - se lleno formulario")
+            send_log(page.url)
+            await asyncio.sleep(5)
+            await solve_captcha(page)
+            send_log(page.url)
+            send_log("E8 - captcha2")
 
+            otp = await mail_service.wait_for_otp()
+            if otp:
+                send_log(f"🔢 OTP: `{otp}`")
+                await page.fill("input[name='code']", otp)
+                await page.click("#cvf-submit-otp-button")
+                await page.wait_for_timeout(11000)
+                send_log("E8 - se obtuvo codigo")
+                cookies = await context.cookies()
+                with open("session.json", "w") as f: json.dump(cookies, f)
+                with open("session.json", "rb") as f:
+                    bot.send_document(CHAT_ID, f, caption=f"✅ Amazon Creada: {email}")
+            else:
+                send_log("❌ OTP no recibido.")
         except Exception as e:
-            send_log(f"💥 FATAL: {e}")
+            send_log(f"⚠️ Error: {str(e)}")
+        finally:
+            await browser.close()
 
-        await browser.close()
+# --- BOT INTERFACE ---
+@bot.message_handler(commands=['start'])
+def start_cmd(message):
+    bot.reply_to(message, "ZeuS Bot Online. Usa /crear para una cuenta Amazon.")
 
+@bot.message_handler(commands=['crear'])
+def run_cmd(message):
+    bot.reply_to(message, "⚙️ Iniciando proceso...")
+    asyncio.run(create_amazon())
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    send_log("🔥 Bot iniciado correctamente en Railway")
+    bot.infinity_polling()
+
