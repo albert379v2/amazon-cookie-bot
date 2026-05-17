@@ -226,7 +226,7 @@ async def create_amazon():
             await page.wait_for_timeout(2000)
             await debug(page, "01_click_comfirregister")
             send_log("Fllemar datos")
-            await page.fill("#ap_customer_name", f"{name} aldama")            
+            await page.fill("#ap_customer_name", "Jhonatan aldama")            
             send_log("F3")
             await page.fill("#ap_password", "Admin.2026.!")
             await debug(page, "01_formulario")
