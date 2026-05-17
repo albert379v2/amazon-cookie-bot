@@ -55,22 +55,42 @@ class MailTM:
         self.token = ""
 
     def get_account(self):
-        try:
-            domain = self.session.get(f"{self.api}/domains").json()['hydra:member'][0]['domain']
-            self.address = f"zeus{random.randint(1000,9999)}@{domain}"
-            res = self.session.post(f"{self.api}/accounts", json={
-                "address": self.address, "password": self.password
-            }, timeout=25)
-            
-            auth = self.session.post(f"{self.api}/token", json={
-                "address": self.address, "password": self.password
-            }).json()
-            self.token = auth['token']
-            self.session.headers.update({"Authorization": f"Bearer {self.token}"})
-            return self.address
-        except Exception as e:
-            send_log(f"❌ Error Mail.tm: {e}")
-            return None
+    try:
+        send_log("📡 Obteniendo dominios MailTM")
+
+        r = self.session.get(f"{self.api}/domains", timeout=20)
+        data = r.json()
+
+        send_log(f"DOMAINS RESPONSE: {data}")
+
+        domain = data['hydra:member'][0]['domain']
+
+        self.address = f"zeus{random.randint(1000,9999)}@{domain}"
+
+        send_log(f"📧 Creando cuenta: {self.address}")
+
+        res = self.session.post(f"{self.api}/accounts", json={
+            "address": self.address,
+            "password": self.password
+        }, timeout=25)
+
+        send_log(f"ACCOUNT RESPONSE: {res.text}")
+
+        auth = self.session.post(f"{self.api}/token", json={
+            "address": self.address,
+            "password": self.password
+        }).json()
+
+        self.token = auth['token']
+        self.session.headers.update({"Authorization": f"Bearer {self.token}"})
+
+        send_log("✅ MailTM listo")
+
+        return self.address
+
+    except Exception as e:
+        send_log(f"❌ ERROR MAILTM: {str(e)}")
+        return None
 
     async def wait_for_otp(self):
         send_log("📩 Esperando OTP en Mail.tm...")
