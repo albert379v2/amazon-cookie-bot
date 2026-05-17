@@ -149,45 +149,25 @@ async def create_amazon():
         )
             page = await context.new_page()
             send_log("🌐 Abriendo registro Amazon")
-        await page.goto("https://www.amazon.com.mx/ap/register", wait_until="domcontentloaded")
-
-        await page.wait_for_timeout(2000)
-
-        await page.screenshot(path="step1.png")
-
-        # 🛡️ CAPTCHA (si aparece)
-        await solve_captcha(page)
-
-        # 🟡 2. LLENAR EMAIL
-        send_log("📧 Ingresando email")
-
-        email_input = page.locator("#ap_customer_name, #ap_email")
-        await page.wait_for_selector("#ap_email", timeout=20000)
-        await page.fill("#ap_email", email)
-
-        await page.click("#continue")
-
-        # 🔁 esperar transición real
-        await page.wait_for_load_state("networkidle")
-
-        await page.screenshot(path="step2.png")
-
-        # 🟠 3. VERIFICAR SI PASÓ A FORMULARIO DE REGISTRO
-        send_log("🧾 Cargando formulario de cuenta")
-
-        # nombre
-        if await page.locator("#ap_customer_name").count() > 0:
-            await page.fill("#ap_customer_name", f"Zeus {random.randint(10,99)}")
-
-        # password
-        if await page.locator("#ap_password").count() > 0:
-            await page.fill("#ap_password", "Admin.2026.!")
-
-        # confirmar password (si existe)
-        if await page.locator("#ap_password_check").count() > 0:
-            await page.fill("#ap_password_check", "Admin.2026.!")
-
-        await page.screenshot(path="step3.png")
+            await page.goto("https://www.amazon.com.mx/ap/register", wait_until="domcontentloaded")
+            await page.wait_for_timeout(2000)
+            await page.screenshot(path="step1.png")
+            await solve_captcha(page)
+            send_log("📧 Ingresando email")
+            email_input = page.locator("#ap_customer_name, #ap_email")
+            await page.wait_for_selector("#ap_email", timeout=20000)
+            await page.fill("#ap_email", email)
+            await page.click("#continue")
+            await page.wait_for_load_state("networkidle")
+            await page.screenshot(path="step2.png")
+            send_log("🧾 Cargando formulario de cuenta")
+            if await page.locator("#ap_customer_name").count() > 0:
+                await page.fill("#ap_customer_name", f"Zeus {random.randint(10,99)}")
+                if await page.locator("#ap_password").count() > 0:
+                    await page.fill("#ap_password", "Admin.2026.!")
+                    if await page.locator("#ap_password_check").count() > 0:
+                        await page.fill("#ap_password_check", "Admin.2026.!")
+                        await page.screenshot(path="step3.png")
 
         # 🟢 4. SUBMIT REGISTRO
         send_log("📨 Enviando registro")
