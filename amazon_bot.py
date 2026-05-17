@@ -160,7 +160,7 @@ async def create_amazon():
             """, timeout=30000)
             send_log(page.url)
             await page.screenshot(path="debug.png")
-            await page.goto(url)
+            #await page.goto(url)
             send_log("🌐 Página cargada")
             send_screenshot(page, "after_goto")
 
