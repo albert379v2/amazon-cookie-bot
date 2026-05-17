@@ -46,11 +46,19 @@ def send_log(msg):
     except:
         pass
         
+import os
+
+def safe_name(name: str):
+    return name.replace("/", "_").replace(" ", "_").replace(":", "_")
+
 def send_screenshot(page, name):
     try:
-        os.makedirs("/tmp", exist_ok=True)
+        folder = "screenshots"
+        os.makedirs(folder, exist_ok=True)
 
-        path = f"/tmp/{name}.png"
+        file_name = safe_name(name) + ".png"
+        path = os.path.join(folder, file_name)
+
         page.screenshot(path=path, full_page=True)
 
         with open(path, "rb") as img:
@@ -58,7 +66,6 @@ def send_screenshot(page, name):
 
     except Exception as e:
         send_log(f"❌ Screenshot error: {e}")
-
 # --- MANEJO DE CORREO (MAIL.TM API) ---
 class MailTM:
     def __init__(self):
