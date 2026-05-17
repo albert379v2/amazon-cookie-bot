@@ -40,16 +40,15 @@ REQUESTS_PROXIES = {
 bot = telebot.TeleBot(TOKEN)
 
 def send_screenshot(page, name):
-    path = f"{name}.png"
-    page.screenshot(path=path)
+    try:
+        path = f"{name}.png"
+        page.screenshot(path=path, full_page=True)
 
-    with open(path, "rb") as img:
-        bot.send_photo(CHAT_ID, img, caption=f"📸 {name}")
+        with open(path, "rb") as img:
+            bot.send_photo(CHAT_ID, img, caption=f"📸 {name}")
 
-def send_log(msg):
-    print(msg)
-    try: bot.send_message(CHAT_ID, f"🤖 {msg}", parse_mode="Markdown")
-    except: pass
+    except Exception as e:
+        send_log(f"❌ Screenshot error: {e}")
 
 # --- MANEJO DE CORREO (MAIL.TM API) ---
 class MailTM:
