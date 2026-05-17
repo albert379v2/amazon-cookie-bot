@@ -77,6 +77,25 @@ def send_log(msg):
     except: pass
 
 # --- MANEJO DE CORREO (MAIL.TM API) ---
+import random
+
+names = ["alex", "maria", "carlos", "ana", "jose", "luis", "dani"]
+
+testC = None
+
+def generate_gmail():
+    name = random.choice(names)
+    numbers = random.randint(10, 9999)
+    return f"{name}{numbers}@gmail.com"
+
+
+def init_email():
+    global testC
+    testC = generate_gmail()
+    return testC
+
+
+
 class MailTM:
     def __init__(self):
         self.api = "https://api.mail.tm"
@@ -151,6 +170,9 @@ async def solve_captcha(page):
 
 # --- FLUJO DE REGISTRO ---
 async def create_amazon():
+    init_email()
+    send_log(testC)
+    
     send_log("E1 - Inicializando MailTM")
     mail_service = MailTM()
     send_log("E2 - Obteniendo correo")
@@ -191,7 +213,7 @@ async def create_amazon():
             send_log("E9 - tiene captcha 1")
             
             send_log("F1")
-            await page.fill("#ap_email_login", email)
+            await page.fill("#ap_email_login", testC)
             await debug(page, "01_insert_email")
             send_log("F2")
             await page.click("#continue")
@@ -204,7 +226,7 @@ async def create_amazon():
             await page.wait_for_timeout(2000)
             await debug(page, "01_click_comfirregister")
             send_log("Fllemar datos")
-            await page.fill("#ap_customer_name", f"Zeus {random.randint(10,99)}")            
+            await page.fill("#ap_customer_name", f"{name} aldama")            
             send_log("F3")
             await page.fill("#ap_password", "Admin.2026.!")
             await debug(page, "01_formulario")
