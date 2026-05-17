@@ -76,10 +76,10 @@ class MailTM:
             self.session.headers.update({"Authorization": f"Bearer {self.token}"})
             send_log("✅ MailTM listo")
             return self.address
-
-    except Exception as e:
-        send_log(f"❌ ERROR MAILTM: {str(e)}")
-        return None
+        
+        except Exception as e:
+            send_log(f"❌ ERROR MAILTM: {str(e)}")
+            return None
 
     async def wait_for_otp(self):
         send_log("📩 Esperando OTP en Mail.tm...")
