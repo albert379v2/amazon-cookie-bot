@@ -200,6 +200,8 @@ async def create_amazon():
             await page.click("#continue")
             ##await page.click("#continue")
             send_log("F6 click exitoso")
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_timeout(2000)
             await debug(page, "01_click_registrtage")
             send_log("E8 - se lleno formulario")
             send_log(page.url)
