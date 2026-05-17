@@ -138,6 +138,8 @@ async def create_amazon():
     wait_until="domcontentloaded",
     timeout=120000
 )
+            send_log(page.url)
+            await page.screenshot(path="debug.png")
 
             send_log("E8 - Amazon cargó")
             await solve_captcha(page)
