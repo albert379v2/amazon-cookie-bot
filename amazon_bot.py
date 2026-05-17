@@ -189,11 +189,11 @@ async def create_amazon():
                             await page.wait_for_timeout(8000)
                             cookies = await context.cookies()
                             with open("session.json", "w") as f:
-            json.dump(cookies, f)
-            send_log("✅ Registro completado")
-            with open("session.json", "rb") as f:
-                bot.send_document(CHAT_ID, f, caption=f"✅ Cuenta creada: {email}")
-                await browser.close()
+                                json.dump(cookies, f)
+                                send_log("✅ Registro completado")
+                                with open("session.json", "rb") as f:
+                                    bot.send_document(CHAT_ID, f, caption=f"✅ Cuenta creada: {email}")
+                                    await browser.close()
 
 # --- BOT INTERFACE ---
 @bot.message_handler(commands=['start'])
