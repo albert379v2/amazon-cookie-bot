@@ -157,9 +157,17 @@ async def create_amazon():
             send_log("E8 - Amazon cargó")
             await solve_captcha(page)
             send_log("E9 - tiene captcha 1")
-            
+
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_timeout(2000)
             send_log("F1")
-            await page.fill("#ap_email_login", email)
+            #await page.fill("#ap_email_login", email)
+            await page.wait_for_selector("#ap_email_login, #ap_email", timeout=30000)
+            email_input = page.locator("#ap_email_login, #ap_email")
+            await email_input.fill(email)
+            await page.click("#continue")
+
+            
             send_log("F2")
             await page.click("#continue")
             await page.wait_for_timeout(3000)
