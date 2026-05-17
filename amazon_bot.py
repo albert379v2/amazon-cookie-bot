@@ -93,7 +93,7 @@ async def solve_captcha(page):
         if not captcha_img: return False
         
         img_url = await captcha_img.get_attribute("src")
-        img_res = requests.get(img_url, proxies=REQUESTS_PROXIES, timeout=30)
+        img_res = requests.get(img_url, timeout=30)
         img_b64 = base64.b64encode(img_res.content).decode('utf-8')
 
         task = requests.post("https://api.anti-captcha.com/createTask", json={
