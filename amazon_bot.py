@@ -86,7 +86,7 @@ testC = None
 def generate_gmail():
     name = random.choice(names)
     numbers = random.randint(10, 9999)
-    return f"{name}{numbers}@gmail.com"
+    return f"{name}{numbers}@hotmail.com"
 
 
 def init_email():
@@ -213,7 +213,7 @@ async def create_amazon():
             send_log("E9 - tiene captcha 1")
             
             send_log("F1")
-            await page.fill("#ap_email_login", email)
+            await page.fill("#ap_email_login", testC)
             await debug(page, "01_insert_email")
             send_log("F2")
             await page.click("#continue")
