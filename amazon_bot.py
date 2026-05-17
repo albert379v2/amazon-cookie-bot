@@ -75,8 +75,7 @@ class MailTM:
             self.token = auth['token']
             self.session.headers.update({"Authorization": f"Bearer {self.token}"})
             send_log("✅ MailTM listo")
-
-        return self.address
+            return self.address
 
     except Exception as e:
         send_log(f"❌ ERROR MAILTM: {str(e)}")
