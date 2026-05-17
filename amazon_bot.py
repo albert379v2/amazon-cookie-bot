@@ -165,10 +165,8 @@ async def create_amazon():
             await page.wait_for_selector("#ap_email_login, #ap_email", timeout=30000)
             email_input = page.locator("#ap_email_login, #ap_email")
             await email_input.fill(email)
-            await page.click("#continue")
-
-            
             send_log("F2")
+            #await page.click("#continue")
             await page.click("#continue")
             await page.wait_for_timeout(3000)
             if await page.locator("#ap_password").count() > 0:
