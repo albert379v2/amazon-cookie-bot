@@ -56,25 +56,25 @@ class MailTM:
 
     def get_account(self):
         try:
-        send_log("📡 Obteniendo dominios MailTM")
+            send_log("📡 Obteniendo dominios MailTM")
 
         r = self.session.get(f"{self.api}/domains", timeout=20)
         data = r.json()
 
-        send_log(f"DOMAINS RESPONSE: {data}")
+            send_log(f"DOMAINS RESPONSE: {data}")
 
         domain = data['hydra:member'][0]['domain']
 
         self.address = f"zeus{random.randint(1000,9999)}@{domain}"
 
-        send_log(f"📧 Creando cuenta: {self.address}")
+            send_log(f"📧 Creando cuenta: {self.address}")
 
         res = self.session.post(f"{self.api}/accounts", json={
             "address": self.address,
             "password": self.password
         }, timeout=25)
 
-        send_log(f"ACCOUNT RESPONSE: {res.text}")
+            send_log(f"ACCOUNT RESPONSE: {res.text}")
 
         auth = self.session.post(f"{self.api}/token", json={
             "address": self.address,
@@ -83,7 +83,6 @@ class MailTM:
 
         self.token = auth['token']
         self.session.headers.update({"Authorization": f"Bearer {self.token}"})
-
         send_log("✅ MailTM listo")
 
         return self.address
