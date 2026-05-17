@@ -10,6 +10,7 @@ import base64
 import time
 from playwright.async_api import async_playwright
 
+
 # === CONFIGURACIÓN ===
 TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
@@ -32,8 +33,8 @@ PROXY_CONFIG = {
 }
 
 REQUESTS_PROXIES = {
-    "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_ADDR}",
-    "https": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_ADDR}"
+    "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_ADDR}/",
+    "https": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_ADDR}/"
 }
 
 bot = telebot.TeleBot(TOKEN)
@@ -48,61 +49,30 @@ class MailTM:
     def __init__(self):
         self.api = "https://api.mail.tm"
         self.session = requests.Session()
+        self.session.proxies = REQUESTS_PROXIES
         self.address = ""
         self.password = "ZeusBot2026!"
         self.token = ""
 
-
     def get_account(self):
         try:
-        data = self.session.get(
-            f"{self.api}/domains",
-            timeout=30
-        ).json()
+            domain = self.session.get(f"{self.api}/domains").json()['hydra:member'][0]['domain']
+            self.address = f"zeus{random.randint(1000,9999)}@{domain}"
+            res = self.session.post(f"{self.api}/accounts", json={
+                "address": self.address, "password": self.password
+            }, timeout=30)
+            
+            auth = self.session.post(f"{self.api}/token", json={
+                "address": self.address, "password": self.password
+            }).json()
+            self.token = auth['token']
+            self.session.headers.update({"Authorization": f"Bearer {self.token}"})
+            return self.address
+        except Exception as e:
+            send_log(f"❌ Error Mail.tm: {e}")
+            return None
 
-        domains = data.get('hydra:member', [])
-
-        if not domains:
-            raise Exception("No se encontraron dominios")
-
-        domain = domains[0]['domain']
-
-        self.address = f"zeus{random.randint(1000,9999)}@{domain}"
-
-        self.session.post(
-            f"{self.api}/accounts",
-            json={
-                "address": self.address,
-                "password": self.password
-            },
-            timeout=30
-        )
-
-        auth = self.session.post(
-            f"{self.api}/token",
-            json={
-                "address": self.address,
-                "password": self.password
-            },
-            timeout=30
-        ).json()
-
-        self.token = auth.get('token')
-
-        if not self.token:
-            raise Exception("No se obtuvo token")
-
-        self.session.headers.update({
-            "Authorization": f"Bearer {self.token}"
-        })
-
-        return self.address
-
-    except Exception as e:
-        send_log(f"❌ Error Mail.tm: {e}")
-        return None
-
-async def wait_for_otp(self):
+    async def wait_for_otp(self):
         send_log("📩 Esperando OTP en Mail.tm...")
         for _ in range(20):
             await asyncio.sleep(8)
@@ -115,6 +85,7 @@ async def wait_for_otp(self):
                     if otp: return otp.group(1)
             except: continue
         return None
+
 # --- RESOLUTOR DE CAPTCHA ---
 async def solve_captcha(page):
     try:
@@ -199,16 +170,4 @@ def run_cmd(message):
 
 if __name__ == "__main__":
     send_log("🔥 Bot iniciado correctamente en Railway")
-
-    bot.remove_webhook()
-    time.sleep(2)
-
-    while True:
-        try:
-            bot.infinity_polling(
-                timeout=30,
-                long_polling_timeout=30
-            )
-        except Exception as e:
-            print(f"Polling Error: {e}")
-            time.sleep(5)
+    bot.infinity_polling()
