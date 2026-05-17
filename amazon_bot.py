@@ -119,74 +119,113 @@ async def solve_captcha(page):
 
 # --- FLUJO DE REGISTRO ---
 async def create_amazon():
-    send_log("E1 - Inicializando MailTM")
+    send_log("🚀 Iniciando flujo limpio de registro")
+
     mail_service = MailTM()
-    send_log("E2 - Obteniendo correo")
     email = mail_service.get_account()
-    if not email: 
-        send_log("ERR_MAIL_01")
+
+    if not email:
+        send_log("❌ No se pudo crear correo")
         return
-        send_log(f"E3 - Correo creado: {email}")
+
     async with async_playwright() as p:
-        try:
-            browser = await p.chromium.launch(headless=True, proxy=PROXY_CONFIG)
-            context = await browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0")
-            page = await context.new_page()
+        browser = await p.chromium.launch(
+            headless=False,  # importante para estabilidad en Amazon
+            proxy=PROXY_CONFIG
+        )
 
-            send_log(f"🚀 Creando: `{email}`")
-            send_log("E7 - Entrando a Amazon")
-            await page.goto(
-    "https://www.amazon.com.mx/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com.mx%2F%3F_encoding%3DUTF8%26ref_%3Dnavm_hdr_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=anywhere_v2_mx&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0",
-    wait_until="domcontentloaded",
-    timeout=120000
-)
-            send_log(page.url)
-            await page.screenshot(path="debug.png")
+        context = await browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
+            locale="es-MX"
+        )
 
-            send_log("E8 - Amazon cargó")
-            await solve_captcha(page)
-            send_log("E9 - tiene captcha 1")
-            
-            send_log("F1")
-            await page.fill("#ap_email_login", email)
-            send_log("F2")
-            await page.click("#continue")
-            send_log("F2 vontinue1")
-            await page.click("#intention-submit-button")
-            send_log("Fllemar datos")
-            await page.fill("#ap_customer_name", f"Zeus {random.randint(10,99)}")            
-            send_log("F3")
+        page = await context.new_page()
+
+        # 🟢 1. IR DIRECTO A REGISTRO
+        send_log("🌐 Abriendo registro Amazon")
+        await page.goto("https://www.amazon.com.mx/ap/register", wait_until="domcontentloaded")
+
+        await page.wait_for_timeout(2000)
+
+        await page.screenshot(path="step1.png")
+
+        # 🛡️ CAPTCHA (si aparece)
+        await solve_captcha(page)
+
+        # 🟡 2. LLENAR EMAIL
+        send_log("📧 Ingresando email")
+
+        email_input = page.locator("#ap_customer_name, #ap_email")
+        await page.wait_for_selector("#ap_email", timeout=20000)
+        await page.fill("#ap_email", email)
+
+        await page.click("#continue")
+
+        # 🔁 esperar transición real
+        await page.wait_for_load_state("networkidle")
+
+        await page.screenshot(path="step2.png")
+
+        # 🟠 3. VERIFICAR SI PASÓ A FORMULARIO DE REGISTRO
+        send_log("🧾 Cargando formulario de cuenta")
+
+        # nombre
+        if await page.locator("#ap_customer_name").count() > 0:
+            await page.fill("#ap_customer_name", f"Zeus {random.randint(10,99)}")
+
+        # password
+        if await page.locator("#ap_password").count() > 0:
             await page.fill("#ap_password", "Admin.2026.!")
-            send_log("F4")
-            ##await page.fill("#ap_password_check", "Admin.2026.!")
-            send_log("F5 inicia click")
-            await page.click("#auth-continue")
-            ##await page.click("#continue")
-            send_log("F6 click exitoso")
-            send_log("E8 - se lleno formulario")
-            send_log(page.url)
-            await asyncio.sleep(5)
-            await solve_captcha(page)
-            send_log(page.url)
-            send_log("E8 - captcha2")
 
-            otp = await mail_service.wait_for_otp()
-            if otp:
-                send_log(f"🔢 OTP: `{otp}`")
-                await page.fill("input[name='code']", otp)
-                await page.click("#cvf-submit-otp-button")
-                await page.wait_for_timeout(11000)
-                send_log("E8 - se obtuvo codigo")
-                cookies = await context.cookies()
-                with open("session.json", "w") as f: json.dump(cookies, f)
-                with open("session.json", "rb") as f:
-                    bot.send_document(CHAT_ID, f, caption=f"✅ Amazon Creada: {email}")
-            else:
-                send_log("❌ OTP no recibido.")
-        except Exception as e:
-            send_log(f"⚠️ Error: {str(e)}")
-        finally:
+        # confirmar password (si existe)
+        if await page.locator("#ap_password_check").count() > 0:
+            await page.fill("#ap_password_check", "Admin.2026.!")
+
+        await page.screenshot(path="step3.png")
+
+        # 🟢 4. SUBMIT REGISTRO
+        send_log("📨 Enviando registro")
+
+        continue_btn = page.locator("#auth-continue, #continue, input[type='submit']")
+        await continue_btn.first.click()
+
+        await page.wait_for_timeout(5000)
+
+        await solve_captcha(page)
+
+        send_log(f"URL actual: {page.url}")
+
+        # 🔵 5. OTP
+        send_log("📩 Esperando OTP")
+
+        otp = await mail_service.wait_for_otp()
+
+        if not otp:
+            send_log("❌ OTP no recibido")
             await browser.close()
+            return
+
+        send_log(f"🔢 OTP recibido: {otp}")
+
+        otp_input = page.locator("input[name='code'], #cvf-input-code")
+        await otp_input.fill(otp)
+
+        submit_otp = page.locator("#cvf-submit-otp-button, input[type='submit']")
+        await submit_otp.first.click()
+
+        await page.wait_for_timeout(8000)
+
+        # 🍪 guardar sesión
+        cookies = await context.cookies()
+        with open("session.json", "w") as f:
+            json.dump(cookies, f)
+
+        send_log("✅ Registro completado")
+
+        with open("session.json", "rb") as f:
+            bot.send_document(CHAT_ID, f, caption=f"✅ Cuenta creada: {email}")
+
+        await browser.close()
 
 # --- BOT INTERFACE ---
 @bot.message_handler(commands=['start'])
