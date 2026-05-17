@@ -78,7 +78,7 @@ class MailTM:
             await asyncio.sleep(8)
             try:
                 #msgs_data = self.session.get(f"{self.api}/messages").json()
-                send_log(str(msgs_data))
+                #send_log(str(msgs_data))
                 msgs = self.session.get(f"{self.api}/messages").json()['hydra:member']
                 if msgs:
                     msg_id = msgs[0]['id']
