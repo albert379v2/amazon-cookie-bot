@@ -213,7 +213,7 @@ async def create_amazon():
             send_log("E9 - tiene captcha 1")
             
             send_log("F1")
-            await page.fill("#ap_email_login", testC)
+            await page.fill("#ap_email_login", email)
             await debug(page, "01_insert_email")
             send_log("F2")
             await page.click("#continue")
