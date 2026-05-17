@@ -140,6 +140,17 @@ async def create_amazon():
     wait_until="domcontentloaded",
     timeout=120000
 )
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_timeout(2000)
+            if "/ax/claim" in page.url:
+                send_log("⏳ Amazon en intent routing (esperando UI real)")
+            await page.wait_for_function("""
+            () => {
+            return document.querySelector('#ap_email_login')
+            || document.querySelector('#ap_email')
+            || document.querySelector('#ap_customer_name')
+            }
+            """, timeout=30000)
             send_log(page.url)
             await page.screenshot(path="debug.png")
 
