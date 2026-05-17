@@ -46,7 +46,6 @@ def send_log(msg):
     except:
         pass
         
-import os
 
 def safe_name(name: str):
     return name.replace("/", "_").replace(" ", "_").replace(":", "_")
