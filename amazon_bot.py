@@ -16,8 +16,21 @@ AC_KEY = os.getenv("AC_KEY")
 
 bot = telebot.TeleBot(TOKEN)
 
+
 DEBUG_DIR = "/tmp/debug"
 os.makedirs(DEBUG_DIR, exist_ok=True)
+
+async def debug_screenshot(page, step):
+    try:
+        path = os.path.join(DEBUG_DIR, f"{safe_name(step)}.png")
+
+        await page.screenshot(path=path, full_page=True)
+
+        with open(path, "rb") as img:
+            bot.send_photo(CHAT_ID, img, caption=f"📸 {step}")
+
+    except Exception as e:
+        send_log(f"Screenshot error: {e}")
 
 # =========================
 # LOG SYSTEM
@@ -46,17 +59,19 @@ def debug_screenshot(page, name):
     except Exception as e:
         send_log(f"Screenshot error: {e}")
 
-def debug_snapshot(page, step):
+async def debug_snapshot(page, step):
     try:
         html_path = os.path.join(DEBUG_DIR, f"{safe_name(step)}.html")
 
+        html = await page.content()
+
         with open(html_path, "w", encoding="utf-8") as f:
-            f.write(page.content())
+            f.write(html)
 
         send_log(f"🌐 STEP: {step}")
         send_log(f"🔗 URL: {page.url}")
 
-        debug_screenshot(page, step)
+        await debug_screenshot(page, step)
 
     except Exception as e:
         send_log(f"Snapshot error: {e}")
@@ -100,17 +115,22 @@ class AmazonStateMachine:
         send_log(f"🔁 STATE → {s}")
 
     async def step(self, name, action):
-        try:
-            send_log(f"➡️ STEP {name}")
-            debug_snapshot(self.page, name)
-            result = await action()
-            debug_snapshot(self.page, f"{name}_after")
-            return result
-        except Exception as e:
-            send_log(f"❌ ERROR {name}: {e}")
-            debug_snapshot(self.page, f"{name}_ERROR")
-            self.set_state(STATE_ERROR)
-            raise e
+    try:
+        send_log(f"➡️ STEP {name}")
+
+        await debug_snapshot(self.page, name)
+
+        result = await action()
+
+        await debug_snapshot(self.page, f"{name}_after")
+
+        return result
+
+    except Exception as e:
+        send_log(f"❌ ERROR {name}: {e}")
+        await debug_snapshot(self.page, f"{name}_ERROR")
+        self.set_state(STATE_ERROR)
+        raise e
 
     # =====================
     async def open(self):
