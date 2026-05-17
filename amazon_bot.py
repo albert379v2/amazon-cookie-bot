@@ -90,7 +90,7 @@ class MailTM:
         self.token = auth.get('token')
 
         if not self.token:
-            raise Exception("No se obtuvo token Mail.tm")
+            raise Exception("No se obtuvo token")
 
         self.session.headers.update({
             "Authorization": f"Bearer {self.token}"
