@@ -182,8 +182,10 @@ async def create_amazon():
             
             send_log("F1")
             await page.fill("#ap_email_login", email)
+            await debug(page, "01_insert_email")
             send_log("F2")
             await page.click("#continue")
+            await debug(page, "01_click_continue")
             send_log("F2 vontinue1")
             await page.click("#intention-submit-button")
             send_log("Fllemar datos")
