@@ -47,8 +47,8 @@ def send_log(msg):
 class MailTM:
     def __init__(self):
         self.api = "https://api.mail.tm"
-        self.session = requests.Session()
-        self.session.proxies = REQUESTS_PROXIES
+        #self.session = requests.Session()
+        #self.session.proxies = REQUESTS_PROXIES
         self.address = ""
         self.password = "ZeusBot2026!"
         self.token = ""
