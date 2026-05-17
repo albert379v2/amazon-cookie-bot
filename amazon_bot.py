@@ -45,26 +45,32 @@ def send_log(msg):
         bot.send_message(CHAT_ID, f"🤖 {msg}", parse_mode="Markdown")
     except:
         pass
-        
-
-def safe_name(name: str):
-    return name.replace("/", "_").replace(" ", "_").replace(":", "_")
 
 def send_screenshot(page, name):
     try:
-        folder = "screenshots"
+        # carpeta segura (Railway compatible)
+        folder = os.path.join(os.getcwd(), "screenshots")
         os.makedirs(folder, exist_ok=True)
 
-        file_name = safe_name(name) + ".png"
-        path = os.path.join(folder, file_name)
+        # nombre seguro del archivo
+        safe_name = name.replace("/", "_").replace(" ", "_").replace(":", "_")
+        path = os.path.join(folder, f"{safe_name}.png")
 
+        # tomar screenshot
         page.screenshot(path=path, full_page=True)
 
+        # enviar a telegram
         with open(path, "rb") as img:
-            bot.send_photo(CHAT_ID, img, caption=f"📸 {name}")
+            bot.send_photo(
+                CHAT_ID,
+                img,
+                caption=f"📸 Screenshot: {name}"
+            )
 
     except Exception as e:
-        send_log(f"❌ Screenshot error: {e}")
+        print(f"Screenshot error: {e}")       
+
+
 # --- MANEJO DE CORREO (MAIL.TM API) ---
 class MailTM:
     def __init__(self):
