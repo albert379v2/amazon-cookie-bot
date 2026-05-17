@@ -56,11 +56,10 @@ class MailTM:
 
     def get_account(self):
         try:
-        send_log("📡 Obteniendo dominios MailTM")
+            send_log("📡 Obteniendo dominios MailTM")
 
         r = self.session.get(f"{self.api}/domains", timeout=20)
         data = r.json()
-
         send_log(f"DOMAINS RESPONSE: {data}")
 
         domain = data['hydra:member'][0]['domain']
