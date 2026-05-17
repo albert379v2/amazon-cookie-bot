@@ -155,7 +155,9 @@ async def create_amazon():
     wait_until="domcontentloaded",
     timeout=120000
 )
-            send_screenshot(page, "05_before_otp")
+            await page.wait_for_load_state("networkidle")
+            await page.wait_for_timeout(1500)
+            send_screenshot(page, "01_after_goto")
             await page.wait_for_load_state("domcontentloaded")
             await page.wait_for_timeout(2000)
             if "/ax/claim" in page.url:
@@ -168,6 +170,7 @@ async def create_amazon():
             }
             """, timeout=30000)
             send_log(page.url)
+            send_screenshot(page, "02_ax_claim")
         
 
             send_log("E8 - Amazon cargó")
