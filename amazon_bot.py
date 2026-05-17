@@ -54,7 +54,7 @@ class MailTM:
 
 
     def get_account(self):
-    try:
+        try:
         data = self.session.get(
             f"{self.api}/domains",
             timeout=30
