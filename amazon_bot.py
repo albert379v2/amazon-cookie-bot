@@ -162,8 +162,10 @@ async def create_amazon():
             ##await page.click("#continue")
             send_log("F6 click exitoso")
             send_log("E8 - se lleno formulario")
+            send_log(page.url)
             await asyncio.sleep(5)
             await solve_captcha(page)
+            send_log(page.url)
             send_log("E8 - captcha2")
 
             otp = await mail_service.wait_for_otp()
