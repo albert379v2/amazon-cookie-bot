@@ -162,8 +162,12 @@ async def create_amazon():
     async with async_playwright() as p:
         try:
             browser = await p.chromium.launch(headless=True, proxy=PROXY_CONFIG)
-            context = await browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0")
-            page = await context.new_page()
+            async def new_clean_page():
+                context = await browser.new_context(
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0")
+                page = await context.new_page()
+                return context, page
+                context, page = await new_clean_page()
 
             send_log(f"🚀 Creando: `{email}`")
             send_log("E7 - Entrando a Amazon")
