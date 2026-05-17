@@ -168,50 +168,32 @@ async def create_amazon():
                     if await page.locator("#ap_password_check").count() > 0:
                         await page.fill("#ap_password_check", "Admin.2026.!")
                         await page.screenshot(path="step3.png")
-
-        # 🟢 4. SUBMIT REGISTRO
-        send_log("📨 Enviando registro")
-
-        continue_btn = page.locator("#auth-continue, #continue, input[type='submit']")
-        await continue_btn.first.click()
-
-        await page.wait_for_timeout(5000)
-
-        await solve_captcha(page)
-
-        send_log(f"URL actual: {page.url}")
-
-        # 🔵 5. OTP
-        send_log("📩 Esperando OTP")
-
-        otp = await mail_service.wait_for_otp()
-
-        if not otp:
-            send_log("❌ OTP no recibido")
-            await browser.close()
-            return
-
-        send_log(f"🔢 OTP recibido: {otp}")
-
-        otp_input = page.locator("input[name='code'], #cvf-input-code")
-        await otp_input.fill(otp)
-
-        submit_otp = page.locator("#cvf-submit-otp-button, input[type='submit']")
-        await submit_otp.first.click()
-
-        await page.wait_for_timeout(8000)
-
-        # 🍪 guardar sesión
-        cookies = await context.cookies()
-        with open("session.json", "w") as f:
+                        send_log("📨 Enviando registro")
+                        continue_btn = page.locator("#auth-continue, #continue, input[type='submit']")
+                        await continue_btn.first.click()
+                        await page.wait_for_timeout(5000)
+                        await solve_captcha(page)
+                        send_log(f"URL actual: {page.url}")
+                        send_log("📩 Esperando OTP")
+                        
+                        otp = await mail_service.wait_for_otp()
+                        if not otp:
+                            send_log("❌ OTP no recibido")
+                            await browser.close()
+                            return
+                            send_log(f"🔢 OTP recibido: {otp}")
+                            otp_input = page.locator("input[name='code'], #cvf-input-code")
+                            await otp_input.fill(otp)
+                            submit_otp = page.locator("#cvf-submit-otp-button, input[type='submit']")
+                            await submit_otp.first.click()
+                            await page.wait_for_timeout(8000)
+                            cookies = await context.cookies()
+                            with open("session.json", "w") as f:
             json.dump(cookies, f)
-
-        send_log("✅ Registro completado")
-
-        with open("session.json", "rb") as f:
-            bot.send_document(CHAT_ID, f, caption=f"✅ Cuenta creada: {email}")
-
-        await browser.close()
+            send_log("✅ Registro completado")
+            with open("session.json", "rb") as f:
+                bot.send_document(CHAT_ID, f, caption=f"✅ Cuenta creada: {email}")
+                await browser.close()
 
 # --- BOT INTERFACE ---
 @bot.message_handler(commands=['start'])
