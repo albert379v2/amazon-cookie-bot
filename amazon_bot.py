@@ -1,6 +1,3 @@
-from config import *
-from utils.logger import *
-from captcha.canvas_solver import *
 import time
 import os
 import json
@@ -15,12 +12,189 @@ from playwright.async_api import async_playwright
 
 
 # === CONFIGURACIÓN ===
+TOKEN = os.getenv("BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
+AC_KEY = os.getenv("AC_KEY")
+
+PROXY_ADDR = os.getenv("PROXY_ADDR")
+PROXY_USER = os.getenv("PROXY_USER")
+PROXY_PASS = os.getenv("PROXY_PASS")
+
+print("TOKEN:", TOKEN)
+print("CHAT_ID:", CHAT_ID)
+print("PROXY_ADDR:", PROXY_ADDR)
+print("PROXY_USER:", PROXY_USER)
+print("PROXY_PASS:", PROXY_PASS)
+
+PROXY_CONFIG = {
+    "server": f"http://{PROXY_ADDR}",
+    "username": PROXY_USER,
+    "password": PROXY_PASS
+}
+
+REQUESTS_PROXIES = {
+    "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_ADDR}/",
+    "https": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_ADDR}/"
+}
 
 bot = telebot.TeleBot(TOKEN)
-init_logger(bot)
 
+DEBUG_DIR = "debug"
+os.makedirs(DEBUG_DIR, exist_ok=True)
 
+def safe_name(name: str) -> str:
+    return (
+        name.replace("/", "_")
+            .replace(" ", "_")
+            .replace(":", "_")
+            .replace("?", "_")
+            .replace("=", "_")
+    )
+    
+async def take_screenshot(page, step: str):
+    path = os.path.join(DEBUG_DIR, f"{safe_name(step)}.png")
+
+    await page.screenshot(
+        path=path,
+        full_page=True
+    )
+
+    return path
+
+def send_screenshot(path: str, caption: str):
+    with open(path, "rb") as img:
+        bot.send_photo(CHAT_ID, img, caption=caption)
+async def debug(page, step: str):
+    try:
+        path = await take_screenshot(page, step)
+        send_screenshot(path, f"📸 {step}")
+    except Exception as e:
+        print(f"Screenshot error: {e}")
+
+def send_log(msg):
+    print(msg)
+    try: bot.send_message(CHAT_ID, f"🤖 {msg}", parse_mode="Markdown")
+    except: pass
 #iniciamos detección de captcha
+async def detect_canvas_captcha(page):
+
+    text = await page.locator("body").inner_text()
+
+    if "Elija todo" in text:
+        return True
+
+    if "Resuelve esta adivinanza" in text:
+        return True
+
+    if await page.locator("canvas").count() > 0:
+        return True
+
+    return False
+
+#captura del captcha
+async def capture_captcha(page):
+
+    canvas = page.locator("canvas").first
+
+    await canvas.screenshot(path="captcha.png")
+
+    return "captcha.png"
+
+#click sobre tiles
+
+async def click_captcha_tile(page, tile):
+
+    canvas = page.locator("canvas").first
+
+    box = await canvas.bounding_box()
+
+    if not box:
+        send_log("Canvas no encontrado")
+        return
+
+    cell_w = box["width"] / 3
+    cell_h = box["height"] / 3
+
+    tile -= 1
+
+    row = tile // 3
+    col = tile % 3
+
+    x = box["x"] + (col * cell_w) + (cell_w / 2)
+    y = box["y"] + (row * cell_h) + (cell_h / 2)
+
+    send_log(f"Click tile {tile+1}")
+
+    await page.mouse.click(x, y)
+
+#resolv tiles
+#resolv tiles
+async def solve_canvas_captcha(page, tiles):
+
+    for tile in tiles:
+
+        await click_captcha_tile(page, tile)
+
+        await asyncio.sleep(0.05)
+
+    # Esperar render visual REAL del canvas
+    await page.wait_for_timeout(1200)
+
+    # Screenshot final
+    captcha = page.locator("#captcha-container")
+
+    await captcha.screenshot(path="captcha_selected.png")
+
+    with open("captcha_selected.png", "rb") as photo:
+        bot.send_photo(
+            CHAT_ID,
+            photo,
+            caption="✅ Preview selección"
+        )
+
+    # Pequeña pausa antes de verify
+    await page.wait_for_timeout(500)
+
+    # Verify
+    await page.click("#amzn-btn-verify-internal")
+
+###
+def parse_tiles(text):
+
+    numbers = re.findall(r"\d+", text)
+
+    return [int(x) for x in numbers]
+
+
+captcha_answer = None
+
+
+
+async def wait_captcha_response(timeout=120):
+
+    global captcha_answer
+
+    captcha_answer = None
+
+    start = asyncio.get_event_loop().time()
+
+    while True:
+
+        if captcha_answer:
+
+            response = captcha_answer
+
+            captcha_answer = None
+
+            return response
+
+        if asyncio.get_event_loop().time() - start > timeout:
+
+            return None
+
+        await asyncio.sleep(1)
+
+
 
 # --- MANEJO DE CORREO (MAIL.TM API) ---
 import random
