@@ -53,36 +53,37 @@ async def click_captcha_tile(page, tile):
     await page.mouse.click(x, y)
 
 
-async def solve_canvas_captcha(page, tiles, bot, chat_id):
+async def solve_canvas_captcha(page, tiles):
 
-    for tile in tiles:
+    send_log(f"🎯 Resolviendo tiles: {tiles}")
+
+    canvas = page.locator("canvas").first
+
+    for i, tile in enumerate(tiles):
 
         await click_captcha_tile(page, tile)
 
-        await asyncio.sleep(0.05)
+        await page.wait_for_timeout(400)
 
-    # esperar render visual
-    await page.wait_for_timeout(1200)
+        # debug visual opcional
+        await canvas.screenshot(path=f"step_{i}.png")
 
-    captcha = page.locator("#captcha-container")
+    send_log("⏳ Esperando render final del canvas...")
 
-    await captcha.screenshot(
-        path="captcha_selected.png"
-    )
+    await page.wait_for_timeout(1500)
 
-    with open("captcha_selected.png", "rb") as photo:
+    await canvas.screenshot(path="captcha_selected.png")
 
-        bot.send_photo(
-            chat_id,
-            photo,
-            caption="✅ Preview selección"
-        )
+    send_log("📸 Preview enviada")
 
-    await page.wait_for_timeout(500)
+    await page.wait_for_timeout(800)
 
-    await page.click(
-        "#amzn-btn-verify-internal"
-    )
+    send_log("🚀 Enviando verificación...")
+
+    await page.click("#amzn-btn-verify-internal")
+
+    # 🔥 IMPORTANTÍSIMO: esperar resultado real
+    await page.wait_for_timeout(4000)
 
 
 def parse_tiles(text):
