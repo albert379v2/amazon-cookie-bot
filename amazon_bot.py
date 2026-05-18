@@ -206,7 +206,7 @@ testC = None
 def generate_gmail():
     name = random.choice(names)
     numbers = random.randint(10, 9999)
-    return f"{name}{numbers}@hotmail.com"
+    return f"{name}{numbers}@timemail.online"
 
 
 def init_email():
