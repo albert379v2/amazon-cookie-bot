@@ -131,40 +131,23 @@ async def click_captcha_tile(page, tile):
 #resolv tiles
 async def solve_canvas_captcha(page, tiles):
 
-    send_log("Entrando solve_canvas_captcha")
-
     for tile in tiles:
-
-        send_log(f"Clicking tile {tile}")
 
         await click_captcha_tile(page, tile)
 
         await asyncio.sleep(0.5)
 
-    send_log("Tiles seleccionados")
+    # Esperar que el canvas pinte selección
+    await page.wait_for_timeout(1000)
 
-    try:
+    # Captura preview
+    captcha = page.locator("#captcha-container")
 
-        send_log("Esperando render")
+    await captcha.screenshot(path="captcha_selected.png")
 
-        await page.wait_for_timeout(1000)
+    send_log("Preview captcha listo")
 
-        send_log("Buscando captcha container")
-
-        captcha = page.locator("#captcha-container")
-
-        send_log("Tomando screenshot")
-
-        await page.screenshot(path="captcha_selected.png")
-
-        send_log("Screenshot guardado")
-
-    except Exception as e:
-
-        send_log(f"ERROR SCREENSHOT: {e}")
-
-    send_log("Confirmando captcha")
-
+    # Confirmar
     await page.click("#amzn-btn-verify-internal")
 
 
@@ -237,7 +220,7 @@ class MailTM:
     def get_account(self):
         try:
             domain = self.session.get(f"{self.api}/domains").json()['hydra:member'][0]['domain']
-            self.address = f"zus{random.randint(1000,9999)}@{domain}"
+            self.address = f"zeus{random.randint(1000,9999)}@{domain}"
             res = self.session.post(f"{self.api}/accounts", json={
                 "address": self.address, "password": self.password
             }, timeout=25)
@@ -396,12 +379,8 @@ async def create_amazon():
                         send_log(f"Tiles: {tiles}")
                         await solve_canvas_captcha(page, tiles)
                         send_log("Captcha resuelto")
-
-
-            await page.wait_for_load_state("domcontentloaded")
-            
-            await page.wait_for_timeout(14000)
-            await debug(page, "captcha_reduelto")
+                await page.wait_for_timeout(4000)
+                await debug(page, "captcha_reduelto")
             
             otp = await mail_service.wait_for_otp()
             if otp:
@@ -442,4 +421,3 @@ def handle_message(message):
 if __name__ == "__main__":
     send_log("🔥 Bot iniciado correctamente en Railway")
     bot.infinity_polling()
-
