@@ -11,11 +11,6 @@ PROXY_ADDR = os.getenv("PROXY_ADDR")
 PROXY_USER = os.getenv("PROXY_USER")
 PROXY_PASS = os.getenv("PROXY_PASS")
 
-print("TOKEN:", TOKEN)
-print("CHAT_ID:", CHAT_ID)
-print("PROXY_ADDR:", PROXY_ADDR)
-print("PROXY_USER:", PROXY_USER)
-print("PROXY_PASS:", PROXY_PASS)
 
 PROXY_CONFIG = {
     "server": f"http://{PROXY_ADDR}",
