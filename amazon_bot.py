@@ -143,19 +143,29 @@ async def solve_canvas_captcha(page, tiles):
 
     send_log("Tiles seleccionados")
 
-    await page.wait_for_timeout(1000)
+    try:
 
-    send_log("Tomando screenshot")
+        send_log("Esperando render")
 
-    captcha = page.locator("#captcha-container")
+        await page.wait_for_timeout(1000)
 
-    await captcha.screenshot(path="captcha_selected.png")
+        send_log("Buscando captcha container")
 
-    send_log("Screenshot guardado")
+        captcha = page.locator("#captcha-container")
+
+        send_log("Tomando screenshot")
+
+        await captcha.screenshot(path="captcha_selected.png")
+
+        send_log("Screenshot guardado")
+
+    except Exception as e:
+
+        send_log(f"ERROR SCREENSHOT: {e}")
+
+    send_log("Confirmando captcha")
 
     await page.click("#amzn-btn-verify-internal")
-
-    send_log("Captcha confirmado")
 
 
 def parse_tiles(text):
