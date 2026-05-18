@@ -398,9 +398,10 @@ async def create_amazon():
                         send_log("Captcha resuelto")
 
 
-                
-                await page.wait_for_timeout(14000)
-                await debug(page, "captcha_reduelto")
+            await page.wait_for_load_state("domcontentloaded")
+            
+            await page.wait_for_timeout(14000)
+            await debug(page, "captcha_reduelto")
             
             otp = await mail_service.wait_for_otp()
             if otp:
