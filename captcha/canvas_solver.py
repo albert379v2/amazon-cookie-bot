@@ -3,6 +3,24 @@ import asyncio
 
 captcha_answer = None
 
+#iniciamos detección de captcha
+async def detect_canvas_captcha(page):
+
+    text = await page.locator("body").inner_text()
+
+    if "Elija todo" in text:
+        return True
+
+    if "Resuelve esta adivinanza" in text:
+        return True
+
+    if await page.locator("canvas").count() > 0:
+        return True
+
+    return False
+
+
+
 async def capture_captcha(page):
 
     canvas = page.locator("canvas").first
