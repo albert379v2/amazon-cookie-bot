@@ -10,47 +10,15 @@ import base64
 import time
 from playwright.async_api import async_playwright
 from config import *
+from utils import set_bot, safe_name, send_log, send_screenshot, take_screenshot, debug
+
 
 # === CONFIGURACIÓN ===
 
 bot = telebot.TeleBot(TOKEN)
+set_bot(bot)
 
-DEBUG_DIR = "debug"
-os.makedirs(DEBUG_DIR, exist_ok=True)
 
-def safe_name(name: str) -> str:
-    return (
-        name.replace("/", "_")
-            .replace(" ", "_")
-            .replace(":", "_")
-            .replace("?", "_")
-            .replace("=", "_")
-    )
-    
-async def take_screenshot(page, step: str):
-    path = os.path.join(DEBUG_DIR, f"{safe_name(step)}.png")
-
-    await page.screenshot(
-        path=path,
-        full_page=True
-    )
-
-    return path
-
-def send_screenshot(path: str, caption: str):
-    with open(path, "rb") as img:
-        bot.send_photo(CHAT_ID, img, caption=caption)
-async def debug(page, step: str):
-    try:
-        path = await take_screenshot(page, step)
-        send_screenshot(path, f"📸 {step}")
-    except Exception as e:
-        print(f"Screenshot error: {e}")
-
-def send_log(msg):
-    print(msg)
-    try: bot.send_message(CHAT_ID, f"🤖 {msg}", parse_mode="Markdown")
-    except: pass
 #iniciamos detección de captcha
 async def detect_canvas_captcha(page):
 
