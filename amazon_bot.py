@@ -131,31 +131,24 @@ async def click_captcha_tile(page, tile):
 #resolv tiles
 async def solve_canvas_captcha(page, tiles):
 
-    send_log("Entrando solve_canvas_captcha")
-
     for tile in tiles:
-
-        send_log(f"Clicking tile {tile}")
 
         await click_captcha_tile(page, tile)
 
         await asyncio.sleep(0.5)
 
-    send_log("Tiles seleccionados")
-
+    # Esperar que el canvas pinte selección
     await page.wait_for_timeout(1000)
 
-    send_log("Tomando screenshot")
-
+    # Captura preview
     captcha = page.locator("#captcha-container")
 
     await captcha.screenshot(path="captcha_selected.png")
 
-    send_log("Screenshot guardado")
+    send_log("Preview captcha listo")
 
+    # Confirmar
     await page.click("#amzn-btn-verify-internal")
-
-    send_log("Captcha confirmado")
 
 
 def parse_tiles(text):
@@ -428,4 +421,3 @@ def handle_message(message):
 if __name__ == "__main__":
     send_log("🔥 Bot iniciado correctamente en Railway")
     bot.infinity_polling()
-
