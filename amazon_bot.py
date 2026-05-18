@@ -75,6 +75,106 @@ def send_log(msg):
     print(msg)
     try: bot.send_message(CHAT_ID, f"🤖 {msg}", parse_mode="Markdown")
     except: pass
+#iniciamos detección de captcha
+async def detect_canvas_captcha(page):
+
+    text = await page.locator("body").inner_text()
+
+    if "Elija todo" in text:
+        return True
+
+    if "Resuelve esta adivinanza" in text:
+        return True
+
+    if await page.locator("canvas").count() > 0:
+        return True
+
+    return False
+
+#captura del captcha
+async def capture_captcha(page):
+
+    canvas = page.locator("canvas").first
+
+    await canvas.screenshot(path="captcha.png")
+
+    return "captcha.png"
+
+#click sobre tiles
+
+async def click_captcha_tile(page, tile):
+
+    canvas = page.locator("canvas").first
+
+    box = await canvas.bounding_box()
+
+    if not box:
+        send_log("Canvas no encontrado")
+        return
+
+    cell_w = box["width"] / 3
+    cell_h = box["height"] / 3
+
+    tile -= 1
+
+    row = tile // 3
+    col = tile % 3
+
+    x = box["x"] + (col * cell_w) + (cell_w / 2)
+    y = box["y"] + (row * cell_h) + (cell_h / 2)
+
+    send_log(f"Click tile {tile+1}")
+
+    await page.mouse.click(x, y)
+
+#resolv tiles
+async def solve_canvas_captcha(page, tiles):
+
+    for tile in tiles:
+
+        await click_captcha_tile(page, tile)
+
+        await asyncio.sleep(0.5)
+
+    await page.click("#amzn-btn-verify-internal")
+
+
+def parse_tiles(text):
+
+    numbers = re.findall(r"\d+", text)
+
+    return [int(x) for x in numbers]
+
+
+captcha_answer = None
+
+
+
+async def wait_captcha_response(timeout=120):
+
+    global captcha_answer
+
+    captcha_answer = None
+
+    start = asyncio.get_event_loop().time()
+
+    while True:
+
+        if captcha_answer:
+
+            response = captcha_answer
+
+            captcha_answer = None
+
+            return response
+
+        if asyncio.get_event_loop().time() - start > timeout:
+
+            return None
+
+        await asyncio.sleep(1)
+
+
 
 # --- MANEJO DE CORREO (MAIL.TM API) ---
 import random
@@ -247,9 +347,28 @@ async def create_amazon():
             await solve_captcha(page)
             send_log(page.url)
             send_log("E8 - captcha2")
-            html = await page.content()
-            print(html)
             await debug(page, "captcha_final")
+            await page.wait_for_load_state("domcontentloaded")
+            if await detect_canvas_captcha(page):
+                send_log("CAPTCHA CANVAS DETECTADO")
+                await debug(page, "canvas_detected")
+                path = await capture_captcha(page)
+                with open(path, "rb") as photo:
+                bot.send_photo(CHAT_ID, photo)
+                
+                bot.send_message(
+                    CHAT_ID,
+                    "Responde con las casillas.\nEjemplo: 2 5 8"
+                )
+                response = await wait_captcha_response()
+                if not response:
+                    send_log("Timeout captcha")
+                    
+                    return
+                    tiles = parse_tiles(response)
+                    send_log(f"Tiles: {tiles}")
+                    await solve_canvas_captcha(page, tiles)
+                    send_log("Captcha resuelto")
 
             otp = await mail_service.wait_for_otp()
             if otp:
@@ -278,6 +397,14 @@ def start_cmd(message):
 def run_cmd(message):
     bot.reply_to(message, "⚙️ Iniciando proceso...")
     asyncio.run(create_amazon())
+
+
+@bot.message_handler(func=lambda m: True)
+def handle_message(message):
+
+    global captcha_answer
+
+    captcha_answer = message.text
 
 if __name__ == "__main__":
     send_log("🔥 Bot iniciado correctamente en Railway")
