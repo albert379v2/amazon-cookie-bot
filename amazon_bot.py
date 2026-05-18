@@ -247,7 +247,7 @@ async def create_amazon():
             await solve_captcha(page)
             send_log(page.url)
             send_log("E8 - captcha2")
-            await page.click("button:has-text('9')")
+            await page.click("text=9")
             await debug(page, "captcha_final")
 
             otp = await mail_service.wait_for_otp()
