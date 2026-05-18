@@ -375,10 +375,10 @@ async def create_amazon():
                     if not response:
                         send_log("Timeout captcha")
                         return
-                        tiles = parse_tiles(response)
-                        send_log(f"Tiles: {tiles}")
-                        await solve_canvas_captcha(page, tiles)
-                        send_log("Captcha resuelto")
+                    tiles = parse_tiles(response)
+                    send_log(f"Tiles: {tiles}")
+                    await solve_canvas_captcha(page, tiles)
+                    send_log("Captcha resuelto")
                 await page.wait_for_timeout(4000)
                 await debug(page, "captcha_reduelto")
             
