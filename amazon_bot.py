@@ -128,9 +128,6 @@ async def click_captcha_tile(page, tile):
     await page.mouse.click(x, y)
 
 #resolv tiles
-async def solve_canvas_captcha(page, tiles):
-
-
 #resolv tiles
 async def solve_canvas_captcha(page, tiles):
 
