@@ -136,19 +136,17 @@ async def solve_canvas_captcha(page, tiles):
         await click_captcha_tile(page, tile)
 
         await asyncio.sleep(0.5)
-
-    # Esperar que el canvas pinte selección
-    await page.wait_for_timeout(1000)
-
-    # Captura preview
-    captcha = page.locator("#captcha-container")
-
-    await captcha.screenshot(path="captcha_selected.png")
-
-    send_log("Preview captcha listo")
-
-    # Confirmar
-    await page.click("#amzn-btn-verify-internal")
+        captcha = page.locator("#captcha-container")
+        await captcha.screenshot(path="captcha_selected.png")
+        send_log("Preview captcha listo")
+        with open("captcha_selected.png", "rb") as photo:
+            bot.send_photo(
+                CHAT_ID,
+                photo,
+                caption="✅ Así quedaron seleccionadas las casillas"
+            )
+        await page.wait_for_timeout(3000)
+        await page.click("#amzn-btn-verify-internal")
 
 
 def parse_tiles(text):
