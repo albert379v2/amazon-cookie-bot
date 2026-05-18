@@ -379,7 +379,7 @@ async def create_amazon():
                         send_log(f"Tiles: {tiles}")
                         await solve_canvas_captcha(page, tiles)
                         send_log("Captcha resuelto")
-                        await page.wait_for_timeout(4000)
+                await page.wait_for_timeout(4000)
                 await debug(page, "captcha_reduelto")
             
             otp = await mail_service.wait_for_otp()
