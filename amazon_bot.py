@@ -250,7 +250,7 @@ def handle_message(message):
 
     global captcha_answer
 
-    captcha_answer = message.text
+    set_captcha_answer(message.text)
 
 if __name__ == "__main__":
     send_log("🔥 Bot iniciado correctamente en Railway")
