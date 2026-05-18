@@ -189,7 +189,7 @@ async def wait_captcha_response(timeout=120):
 # --- MANEJO DE CORREO (MAIL.TM API) ---
 import random
 
-names = ["alex", "maria", "carlos", "ana", "jose", "luis", "dani"]
+names = ["alexxx", "marrria", "carrrlos", "annna", "jooose", "luuuuis", "daaani"]
 
 testC = None
 
