@@ -237,7 +237,7 @@ class MailTM:
     def get_account(self):
         try:
             domain = self.session.get(f"{self.api}/domains").json()['hydra:member'][0]['domain']
-            self.address = f"zeus{random.randint(1000,9999)}@{domain}"
+            self.address = f"zus{random.randint(1000,9999)}@{domain}"
             res = self.session.post(f"{self.api}/accounts", json={
                 "address": self.address, "password": self.password
             }, timeout=25)
