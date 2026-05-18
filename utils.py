@@ -3,8 +3,9 @@ import telebot
 from config import CHAT_ID
 
 DEBUG_DIR = "debug"
-os.makedirs(DEBUG_DIR, exist_ok=True)
-
+if not os.path.exists(DEBUG_DIR):
+    os.makedirs(DEBUG_DIR, exist_ok=True)
+    
 # ⚠️ IMPORTANTE: el bot se crea en main.py, aquí NO se redefine
 bot = None
 
