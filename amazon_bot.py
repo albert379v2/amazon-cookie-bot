@@ -155,7 +155,7 @@ async def solve_canvas_captcha(page, tiles):
 
         send_log("Tomando screenshot")
 
-        await captcha.screenshot(path="captcha_selected.png")
+        await page.screenshot(path="captcha_selected.png")
 
         send_log("Screenshot guardado")
 
@@ -396,7 +396,10 @@ async def create_amazon():
                         send_log(f"Tiles: {tiles}")
                         await solve_canvas_captcha(page, tiles)
                         send_log("Captcha resuelto")
-                await page.wait_for_timeout(4000)
+
+
+                
+                await page.wait_for_timeout(14000)
                 await debug(page, "captcha_reduelto")
             
             otp = await mail_service.wait_for_otp()
