@@ -288,9 +288,12 @@ async def create_amazon():
             otp = wait_for_otp(testC)
             if otp:
                 send_log(f"🔢 OTP: `{otp}`")
-                await page.fill("input[name='code']", otp)
+                await page.fill("#cvf-input-code", otp)
+                await page.wait_for_timeout(3000)
+                await debug(page, "otp_reduelto")
                 await page.click("#cvf-submit-otp-button")
                 await page.wait_for_timeout(11000)
+                await debug(page, "tel_otp")
                 send_log("E8 - se obtuvo codigo")
                 cookies = await context.cookies()
                 with open("session.json", "w") as f: json.dump(cookies, f)
