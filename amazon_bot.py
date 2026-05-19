@@ -38,7 +38,7 @@ async def detect_canvas_captcha(page):
 #captura del captcha
 async def capture_captcha(page):
 
-    canvas = page.locator("canvas").first
+    captcha = page.locator("#captcha-container")
 
     await canvas.screenshot(path="captcha.png")
 
