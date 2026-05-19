@@ -11,7 +11,7 @@ import time
 from playwright.async_api import async_playwright
 from config import *
 from utils import set_bot, safe_name, send_log, send_screenshot, take_screenshot, debug
-
+from gmail.gmail_reader import wait_for_otp
 
 # === CONFIGURACIÓN ===
 
@@ -141,7 +141,6 @@ async def wait_captcha_response(timeout=120):
 
 
 # --- MANEJO DE CORREO (MAIL.TM API) ---
-import random
 
 names = ["alexxx", "marrria", "carrrlos", "annna", "jooose", "luuuuis", "daaani"]
 
@@ -159,15 +158,6 @@ def init_email():
     return testC
 
 
-
-class MailTM:
-    def __init__(self):
-        self.api = "https://api.mail.tm"
-        self.session = requests.Session()
-        #self.session.proxies = REQUESTS_PROXIES
-        self.address = ""
-        self.password = "ZeusBot2026!"
-        self.token = ""
 
     def get_account(self):
         try:
@@ -236,15 +226,8 @@ async def solve_captcha(page):
 async def create_amazon():
     init_email()
     send_log(testC)
+    email = testC
     
-    send_log("E1 - Inicializando MailTM")
-    mail_service = MailTM()
-    send_log("E2 - Obteniendo correo")
-    email = mail_service.get_account()
-    if not email: 
-        send_log("ERR_MAIL_01")
-        return
-        send_log(f"E3 - Correo creado: {email}")
     async with async_playwright() as p:
         try:
             browser = await p.chromium.launch(headless=True, proxy=PROXY_CONFIG)
@@ -334,7 +317,7 @@ async def create_amazon():
                 await page.wait_for_timeout(4000)
                 await debug(page, "captcha_reduelto")
             
-            otp = await mail_service.wait_for_otp()
+            otp = wait_for_otp(testC)
             if otp:
                 send_log(f"🔢 OTP: `{otp}`")
                 await page.fill("input[name='code']", otp)
