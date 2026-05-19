@@ -142,6 +142,8 @@ async def wait_captcha_response(timeout=120):
 
 # --- MANEJO DE CORREO (MAIL.TM API) ---
 
+# --- MANEJO DE CORREO ---
+
 names = ["alexxx", "marrria", "carrrlos", "annna", "jooose", "luuuuis", "daaani"]
 
 testC = None
@@ -149,7 +151,7 @@ testC = None
 def generate_gmail():
     name = random.choice(names)
     numbers = random.randint(10, 9999)
-    return f"{name}{numbers}@timemail.online"
+    return f"{name}{numbers}@mailgrid.shop"
 
 
 def init_email():
