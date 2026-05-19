@@ -284,14 +284,9 @@ async def create_amazon():
                 path = await capture_captcha(page)
                 text = await page.locator("body").inner_text()
                 question = extract_canvas_question(text)
-                bot.send_photo(CHAT_ID, photo,
-                               caption=question)
                 with open(path, "rb") as photo:
-                    bot.send_photo(CHAT_ID, photo)
-                    bot.send_message(
-                    CHAT_ID,
-                    "Responde con las casillas.\nEjemplo: 2 5 8"
-                )
+                    bot.send_photo(CHAT_ID, photo,
+                                   caption=question)
                     response = await wait_captcha_response()
                     if not response:
                         send_log("Timeout captcha")
