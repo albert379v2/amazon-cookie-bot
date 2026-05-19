@@ -284,7 +284,7 @@ async def create_amazon():
                     send_log("Captcha resuelto")
                 await page.wait_for_timeout(4000)
                 await debug(page, "captcha_reduelto")
-            
+                send_log(f"📩 Esperando OTP para: {testC}")
             otp = wait_for_otp(testC)
             if otp:
                 send_log(f"🔢 OTP: `{otp}`")
