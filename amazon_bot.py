@@ -109,20 +109,21 @@ def parse_tiles(text):
 
     return [int(x) for x in numbers]
 
-
 def extract_canvas_question(text):
 
-    lines = text.splitlines()
+    lines = [x.strip() for x in text.splitlines() if x.strip()]
 
-    for line in lines:
+    for i, line in enumerate(lines):
 
         if "Elija todo" in line:
-            return line
 
-        if "Resuelve esta adivinanza" in line:
+            if i + 1 < len(lines):
+                return f"{line} {lines[i+1]}"
+
             return line
 
     return "Captcha detectado"
+
 
 captcha_answer = None
 
@@ -282,7 +283,7 @@ async def create_amazon():
                 send_log("CAPTCHA CANVAS DETECTADO")
                 await debug(page, "canvas_detected")
                 path = await capture_captcha(page)
-                text = await page.locator("body").inner_text()
+                text = await page.locator("#captcha-container").inner_text()
                 question = extract_canvas_question(text)
                 with open(path, "rb") as photo:
                     bot.send_photo(CHAT_ID, photo,
