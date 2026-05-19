@@ -158,41 +158,7 @@ def init_email():
     return testC
 
 
-
-    def get_account(self):
-        try:
-            domain = self.session.get(f"{self.api}/domains").json()['hydra:member'][0]['domain']
-            self.address = f"zeus{random.randint(1000,9999)}@{domain}"
-            res = self.session.post(f"{self.api}/accounts", json={
-                "address": self.address, "password": self.password
-            }, timeout=25)
-            
-            auth = self.session.post(f"{self.api}/token", json={
-                "address": self.address, "password": self.password
-            }).json()
-            self.token = auth['token']
-            self.session.headers.update({"Authorization": f"Bearer {self.token}"})
-            return self.address
-        except Exception as e:
-            send_log(f"❌ Error Mail.tm: {e}")
-            return None
-
-    async def wait_for_otp(self):
-        send_log("📩 Esperando OTP en Mail.tm...")
-        for _ in range(20):
-            await asyncio.sleep(8)
-            try:
-                #msgs_data = self.session.get(f"{self.api}/messages").json()
-                #send_log(str(msgs_data))
-                msgs = self.session.get(f"{self.api}/messages").json()['hydra:member']
-                if msgs:
-                    msg_id = msgs[0]['id']
-                    content = self.session.get(f"{self.api}/messages/{msg_id}").json()['text']
-                    otp = re.search(r'(\d{6})', content)
-                    if otp: return otp.group(1)
-            except: continue
-        return None
-
+    
 # --- RESOLUTOR DE CAPTCHA ---
 async def solve_captcha(page):
     try:
