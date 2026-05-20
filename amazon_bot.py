@@ -313,7 +313,7 @@ def start_cmd(message):
 
 @bot.message_handler(commands=['crear'])
 def run_cmd(message):
-    bot.reply_to(message, "⚙️ Iniciando proceso...")
+    bot.reply_to(message, "⚙️ Iniciando proceso1...")
     asyncio.run(create_amazon())
 
 
