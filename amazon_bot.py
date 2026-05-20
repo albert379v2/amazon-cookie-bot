@@ -12,6 +12,12 @@ from playwright.async_api import async_playwright
 from config import *
 from utils import set_bot, safe_name, send_log, send_screenshot, take_screenshot, debug
 from gmail.gmail_reader import wait_for_otp
+from states import detect_state
+from handlers.login import handle_login_password
+from handlers.register import (
+    handle_register_intro,
+    handle_register_form
+)
 
 # === CONFIGURACIÓN ===
 
