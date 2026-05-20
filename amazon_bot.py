@@ -38,9 +38,10 @@ async def detect_canvas_captcha(page):
 #captura del captcha
 async def capture_captcha(page):
 
-    captcha = page.locator("#captcha-container")
-    await captcha.screenshot(path="captcha.png")
-    
+    canvas = page.locator("canvas").first
+
+    await canvas.screenshot(path="captcha.png")
+
     return "captcha.png"
 
 #click sobre tiles
@@ -209,7 +210,8 @@ async def create_amazon():
             context, page = await new_clean_page()
 
             send_log(f"🚀 Creando: `{email}`")
-        
+            send_log("E7 - Entrando a Amazon")
+            await debug(page, "0create_mail")
             await page.goto(
     "https://www.amazon.com.mx/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com.mx%2F%3F_encoding%3DUTF8%26ref_%3Dnavm_hdr_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=anywhere_v2_mx&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0",
     wait_until="domcontentloaded",
@@ -217,27 +219,35 @@ async def create_amazon():
 )
             await page.wait_for_load_state("domcontentloaded")
             await page.wait_for_timeout(2000)
-            #await solve_captcha(page)
+            
+            send_log(page.url)
+            await debug(page, "amazon_link")
+
+            send_log("E8 - Amazon cargó")
+            await solve_captcha(page)
+            send_log("E9 - tiene captcha 1")
+            
+            send_log("F1")
             await page.fill("#ap_email_login", testC)
-            #await debug(page, "01_insert_email")
-            #send_log("F2")
+            await debug(page, "01_insert_email")
+            send_log("F2")
             await page.click("#continue")
             await page.wait_for_load_state("domcontentloaded")
             await page.wait_for_timeout(2000)
-            #await debug(page, "01_click_continue")
-            #send_log("F2 vontinue1")
+            await debug(page, "01_click_continue")
+            send_log("F2 vontinue1")
             await page.click("#intention-submit-button")
             await page.wait_for_load_state("domcontentloaded")
             await page.wait_for_timeout(2000)
-            #await debug(page, "01_click_comfirregister")
-            #send_log("Fllemar datos")
+            await debug(page, "01_click_comfirregister")
+            send_log("Fllemar datos")
             await page.fill("#ap_customer_name", "Jhonatan aldama")            
-            #send_log("F3")
+            send_log("F3")
             await page.fill("#ap_password", "Admin.2026.!")
-            await debug(page, "01_formulario_completo")
-            #send_log("F4")
+            await debug(page, "01_formulario")
+            send_log("F4")
             ##await page.fill("#ap_password_check", "Admin.2026.!")
-            #send_log("F5 inicia click")
+            send_log("F5 inicia click")
             await page.wait_for_load_state("domcontentloaded")
             await page.wait_for_timeout(2000)
             await page.click("#continue")
@@ -245,14 +255,14 @@ async def create_amazon():
             send_log("F6 click exitoso")
             await page.wait_for_load_state("domcontentloaded")
             await page.wait_for_timeout(2000)
-            #await debug(page, "01_click_registrtage")
-            #send_log("E8 - se lleno formulario")
-            #send_log(page.url)
-            await asyncio.sleep(2)
-            #await solve_captcha(page)
-            #send_log(page.url)
-            #send_log("E8 - captcha2")
-            #await debug(page, "captcha_final")
+            await debug(page, "01_click_registrtage")
+            send_log("E8 - se lleno formulario")
+            send_log(page.url)
+            await asyncio.sleep(5)
+            await solve_captcha(page)
+            send_log(page.url)
+            send_log("E8 - captcha2")
+            await debug(page, "captcha_final")
             await page.wait_for_load_state("domcontentloaded")
             if await detect_canvas_captcha(page):
                 send_log("CAPTCHA CANVAS DETECTADO")
@@ -317,4 +327,3 @@ def handle_message(message):
 if __name__ == "__main__":
     send_log("🔥 Bot iniciado correctamente en Railway")
     bot.infinity_polling()
-
