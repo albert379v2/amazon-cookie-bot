@@ -309,7 +309,7 @@ async def create_amazon():
 # --- BOT INTERFACE ---
 @bot.message_handler(commands=['start'])
 def start_cmd(message):
-    bot.reply_to(message, "ZeuS Bot Online. Usa /crear para una cuenta Amazon.")
+    bot.reply_to(message, "ZeuS Bot Online. Usa /crear para una cuenta Amazon mx.")
 
 @bot.message_handler(commands=['crear'])
 def run_cmd(message):
