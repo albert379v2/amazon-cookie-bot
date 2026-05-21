@@ -319,6 +319,10 @@ async def create_amazon():
                     await page.fill("#cvf-input-code", otp)
                     await page.click("#cvf-submit-otp-button")
                     await page.wait_for_timeout(5000)
+                elif state == "OTP_PHONE":
+                    send_log("📱 OTP PHONE DETECTADO")
+                    await debug(page, "otp_phone")
+                    return
                 elif state == "SUCCESS":
                     send_log("✅ SUCCESS")
                     break
