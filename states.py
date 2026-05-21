@@ -5,7 +5,9 @@ async def detect_state(page):
     # LOGIN EXISTENTE
     if "Amazon contraseña" in text:
         return "LOGIN_PASSWORD"
-
+    #REGISTRAR O INICIAR SESION
+    if "iniciar sesión o crear cuenta" in text:
+        return "SIGNIN"
     # NUEVA CUENTA
     if "Parece que eres nuevo en Amazon" in text:
         return "REGISTER_INTRO"
