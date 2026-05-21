@@ -210,6 +210,7 @@ async def create_amazon():
 
         browser = None
         captcha_solved = False
+        #otp_handled = False
 
         try:
 
@@ -229,6 +230,7 @@ async def create_amazon():
             )
             last_state = None
             captcha_solved = False
+            otp_handled = False
 
             while True:
 
@@ -239,6 +241,9 @@ async def create_amazon():
                     last_state = state
                     if state != "CAPTCHA_CANVAS":
                         captcha_solved = False
+                    if state != "OTP_EMAIL":
+                        otp_handled = False
+                        
 
                 if state == "LOGIN_PASSWORD":
 
@@ -281,10 +286,21 @@ async def create_amazon():
                     except:
                         send_log("Captcha sigue presente")
                         await page.wait_for_timeout(3000)
-
+                
                 elif state == "OTP_EMAIL":
-
-                    send_log("OTP DETECTADO")
+                    if otp_handled:
+                        await asyncio.sleep(2)
+                        continue
+                    otp_handled = True
+                send_log(f"📩 Esperando OTP para: {testC}")
+                otp = wait_for_otp(testC)
+                if not otp:
+                    send_log("❌ OTP no recibido")
+                    return
+                send_log(f"🔢 OTP: {otp}")
+                await page.fill("#cvf-input-code", otp)
+                await page.click("#cvf-submit-otp-button")
+                await page.wait_for_timeout(5000)
 
                 elif state == "SUCCESS":
 
