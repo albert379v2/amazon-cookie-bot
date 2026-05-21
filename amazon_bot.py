@@ -278,9 +278,12 @@ async def create_amazon():
             send_log("🔁 ENTER LOOP")
 
             while True:
-
+                await page.wait_for_timeout(1200)  # 👈 ESTABILIDAD
                 state = await detect_state(page)
                 send_log(f"STATE RAW => {state}")
+                if state == "UNKNOWN":
+                    await page.wait_for_timeout(1500)
+                    continue
 
                 if state != last_state:
                     send_log(f"STATE => {state}")
@@ -304,7 +307,8 @@ async def create_amazon():
                     signin_handled = True
                     send_log("✍️ Insertando correo")
                     await handle_signin(page, testC)
-                    await page.wait_for_load_state("domcontentloaded")
+                    await page.wait_for_timeout(2500)
+                    #await page.wait_for_load_state("domcontentloaded")
                     await debug(page, "registro")
                     await page.wait_for_timeout(4000)
 
