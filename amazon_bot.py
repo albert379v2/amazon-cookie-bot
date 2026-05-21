@@ -33,7 +33,7 @@ async def detect_canvas_captcha(page):
 
     text = await page.locator("body").inner_text()
 
-    if "Elija todo" in text:
+    if "elija todo" in text:
         return True
 
     if "Resuelve esta adivinanza" in text:
