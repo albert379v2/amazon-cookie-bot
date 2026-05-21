@@ -311,7 +311,7 @@ async def create_amazon():
 
 
                 elif state == "CAPTCHA_DETECTED":
-                    await page.wait_for_timeout(1000)
+                    await page.wait_for_timeout(3000)
                     send_log("🧩 CAPTCHA DETECTADO")
                     await page.wait_for_timeout(1200)
                     captcha_type = await detect_captcha_type(page)
