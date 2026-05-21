@@ -32,6 +32,9 @@ async def detect_state(page):
     # SUCCESS
     if "mi cuenta" in text:
         return "SUCCESS"
+    # OTP TELEFONO
+    if "agregar un número de teléfono móvil" in text:
+        return "OTP_PHONE"
 
     # SIGNIN (SIEMPRE AL FINAL)
     if (
