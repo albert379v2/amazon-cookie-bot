@@ -1,7 +1,8 @@
 async def detect_state(page):
 
     text = (await page.locator("body").inner_text()).lower()
-
+    if "resuelve esta adivinanza" in text:
+        return "CAPTCHA_DETECTED"
     # LOGIN EXISTENTE
     if "amazon contraseña" in text:
         return "LOGIN_PASSWORD"
@@ -42,8 +43,6 @@ async def detect_state(page):
         and "continuar" in text
     ):
         return "SIGNIN"
-    if "resuelve esta adivinanza para" in text:
-        
-        return "CAPTCHA_DETECTED"
+    
     
     return "UNKNOWN"
