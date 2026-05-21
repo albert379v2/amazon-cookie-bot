@@ -280,6 +280,8 @@ async def create_amazon():
             while True:
                 await page.wait_for_timeout(1200)  # 👈 ESTABILIDAD
                 state = await detect_state(page)
+                text_debug = (await page.locator("body").inner_text()).lower()
+                send_log(text_debug[:500])
                 send_log(f"STATE RAW => {state}")
                 if state == "UNKNOWN":
                     text = (await page.locator("body").inner_text()).lower()
