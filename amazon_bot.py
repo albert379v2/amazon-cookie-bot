@@ -315,6 +315,7 @@ async def create_amazon():
                     await page.wait_for_timeout(1200)
                     captcha_type = await detect_captcha_type(page)
                     send_log(f"🧠 CAPTCHA TYPE => {captcha_type}")
+                    send_log(page.url)
                     if captcha_type == "CAPTCHA_ORBIT":
                         send_log("🌀 Iniciando rompecabezas")
                         try:
