@@ -307,22 +307,31 @@ async def create_amazon():
                     send_log("❌ OTP no recibido")
                     return
                 send_log(f"🔢 OTP: {otp}")
+                send_log(f"🔢 OTP: {otp}")
+
                 await page.fill("#cvf-input-code", otp)
+
                 await page.click("#cvf-submit-otp-button")
+
                 await page.wait_for_timeout(5000)
 
             elif state == "SUCCESS":
-            send_log("✅ SUCCESS")
-            break
 
-               else:
-                    send_log("⚠️ Estado desconocido")
-                    text = await page.locator("body").inner_text()
-                    send_log(text[:1500])
-                    await page.wait_for_timeout(7000)
-                    await debug(page, "unknown_state")
-                    return
+                send_log("✅ SUCCESS")
 
+                break
+
+            else:
+
+                send_log("⚠️ Estado desconocido")
+
+                text = await page.locator("body").inner_text()
+
+                send_log(text[:1500])
+
+                await debug(page, "unknown_state")
+
+                return
                 await asyncio.sleep(1)
 
         except Exception as e:
