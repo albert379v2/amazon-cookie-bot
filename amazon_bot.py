@@ -197,7 +197,7 @@ async def solve_captcha(page):
     return False
 
 # --- FLUJO DE REGISTRO ---
-    async def create_amazon():
+async def create_amazon():
 
     init_email()
 
@@ -219,10 +219,10 @@ async def solve_captcha(page):
             page = await context.new_page()
 
             await page.goto(
-    "https://www.amazon.com.mx/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com.mx%2F%3F_encoding%3DUTF8%26ref_%3Dnavm_hdr_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=anywhere_v2_mx&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0",
-    wait_until="domcontentloaded",
-    timeout=120000
-)
+                "https://www.amazon.com.mx/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com.mx%2F%3F_encoding%3DUTF8%26ref_%3Dnavm_hdr_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=anywhere_v2_mx&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0",
+                wait_until="domcontentloaded",
+                timeout=120000
+            )
 
             while True:
 
@@ -271,6 +271,7 @@ async def solve_captcha(page):
             if browser:
 
                 await browser.close()
+
 
 # --- BOT INTERFACE ---
 @bot.message_handler(commands=['start'])
