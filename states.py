@@ -1,10 +1,6 @@
-text = (await page.locator("body").inner_text()).lower()
-
-send_log(f"DEBUG CAPTCHA => {'adivinanza' in text}")
-
-
 async def detect_state(page):
     text = (await page.locator("body").inner_text()).lower()
+    send_log(f"DEBUG CAPTCHA => {'adivinanza' in text}")
     if "resuelve esta adivinanza" in text:
         return "CAPTCHA_DETECTED"
 
