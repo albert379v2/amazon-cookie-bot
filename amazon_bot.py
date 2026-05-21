@@ -259,6 +259,9 @@ async def create_amazon():
                 else:
 
                     send_log("⚠️ UNKNOWN")
+                    text = await page.locator("body").inner_text()
+                    send_log(text[:1500])
+                    await browser.close()
 
                 await asyncio.sleep(1)
 
