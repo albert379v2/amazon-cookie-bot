@@ -5,6 +5,7 @@ async def handle_signin(page, email):
     await page.fill("#ap_email_login", email)
 
     await page.click("#continue")
+    await page.wait_for_timeout(1200)
     
 async def handle_login_password(page):
 
