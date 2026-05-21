@@ -321,6 +321,7 @@ async def create_amazon():
                     await page.wait_for_timeout(5000)
                 elif state == "OTP_PHONE":
                     send_log("📱 OTP PHONE DETECTADO")
+                    send_log(page.url)
                     await debug(page, "otp_phone")
                     return
                 elif state == "SUCCESS":
