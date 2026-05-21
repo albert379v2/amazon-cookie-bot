@@ -282,9 +282,14 @@ async def create_amazon():
                 state = await detect_state(page)
                 send_log(f"STATE RAW => {state}")
                 if state == "UNKNOWN":
-                    await page.wait_for_timeout(1500)
-                    await debug(page, "error desconocido espera")
-                    continue
+                    text = (await page.locator("body").inner_text()).lower()
+                    if "adivinanza" in text:
+                        state = "CAPTCHA_DETECTED"
+                    else:
+                        await page.wait_for_timeout(1500)
+                        await debug(page, "error desconocido espera")
+                        continue
+
 
                 if state != last_state:
                     send_log(f"STATE => {state}")
