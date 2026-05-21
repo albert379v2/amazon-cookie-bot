@@ -295,6 +295,7 @@ async def create_amazon():
                     send_log("⚠️ Estado desconocido")
                     text = await page.locator("body").inner_text()
                     send_log(text[:1500])
+                    await page.wait_for_timeout(7000)
                     await debug(page, "unknown_state")
                     return
 
