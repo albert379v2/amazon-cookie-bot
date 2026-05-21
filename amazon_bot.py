@@ -302,10 +302,9 @@ async def create_amazon():
                 await page.click("#cvf-submit-otp-button")
                 await page.wait_for_timeout(5000)
 
-                elif state == "SUCCESS":
-
-                    send_log("✅ SUCCESS")
-                    break
+            elif state == "SUCCESS":
+            send_log("✅ SUCCESS")
+            break
 
                 else:
                     send_log("⚠️ Estado desconocido")
