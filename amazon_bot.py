@@ -13,7 +13,10 @@ from config import *
 from utils import set_bot, safe_name, send_log, send_screenshot, take_screenshot, debug
 from gmail.gmail_reader import wait_for_otp
 from states import detect_state
-from handlers.login import handle_login_password
+from handlers.login import (
+    handle_login_password,
+    handle_signin
+)
 from handlers.register import (
     handle_register_intro,
     handle_register_form
@@ -234,6 +237,10 @@ async def create_amazon():
 
                     await handle_login_password(page)
                     return
+
+                elif state == "SIGNIN":
+                    await handle_signin(page, testC)
+                    await page.wait_for_timeout(3000)
 
                 elif state == "REGISTER_INTRO":
 
