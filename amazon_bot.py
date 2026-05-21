@@ -28,7 +28,7 @@ bot = telebot.TeleBot(TOKEN)
 set_bot(bot)
 
 
-#iniciamos detección de captcha
+# iniciamos detección de captcha
 async def detect_canvas_captcha(page):
 
     text = await page.locator("body").inner_text()
@@ -44,7 +44,9 @@ async def detect_canvas_captcha(page):
 
     return False
 
-#captura del captcha
+# captura del captcha
+
+
 async def capture_captcha(page):
 
     canvas = page.locator("canvas").first
@@ -53,7 +55,8 @@ async def capture_captcha(page):
 
     return "captcha.png"
 
-#click sobre tiles
+# click sobre tiles
+
 
 async def click_captcha_tile(page, tile):
 
@@ -80,8 +83,10 @@ async def click_captcha_tile(page, tile):
 
     await page.mouse.click(x, y)
 
-#resolv tiles
-#resolv tiles
+# resolv tiles
+# resolv tiles
+
+
 async def solve_canvas_captcha(page, tiles):
 
     for tile in tiles:
@@ -112,6 +117,8 @@ async def solve_canvas_captcha(page, tiles):
     await page.click("#amzn-btn-verify-internal")
 
 ###
+
+
 def parse_tiles(text):
 
     numbers = re.findall(r"\d+", text)
@@ -120,7 +127,6 @@ def parse_tiles(text):
 
 
 captcha_answer = None
-
 
 
 async def wait_captcha_response(timeout=120):
@@ -148,14 +154,15 @@ async def wait_captcha_response(timeout=120):
         await asyncio.sleep(1)
 
 
-
 # --- MANEJO DE CORREO (MAIL.TM API) ---
 
 # --- MANEJO DE CORREO ---
 
-names = ["alexxx", "marrria", "carrrlos", "annna", "jooose", "luuuuis", "daaani"]
+names = ["alexxx", "marrria", "carrrlos",
+    "annna", "jooose", "luuuuis", "daaani"]
 
 testC = None
+
 
 def generate_gmail():
     name = random.choice(names)
@@ -169,13 +176,13 @@ def init_email():
     return testC
 
 
-    
 # --- RESOLUTOR DE CAPTCHA ---
 async def solve_captcha(page):
     try:
         captcha_img = await page.query_selector('img[src*="captcha"]')
-        if not captcha_img: return False
-        
+        if not captcha_img:
+            return False
+
         img_url = await captcha_img.get_attribute("src")
         img_res = requests.get(img_url, timeout=35)
         img_b64 = base64.b64encode(img_res.content).decode('utf-8')
@@ -183,7 +190,7 @@ async def solve_captcha(page):
         task = requests.post("https://api.anti-captcha.com/createTask", json={
             "clientKey": AC_KEY, "task": {"type": "ImageToTextTask", "body": img_b64}
         }).json()
-        
+
         task_id = task.get("taskId")
         for _ in range(15):
             await asyncio.sleep(3)
@@ -196,10 +203,13 @@ async def solve_captcha(page):
                 await page.fill("#captchacharacters", text)
                 await page.press("#captchacharacters", "Enter")
                 return True
-    except: pass
+    except:
+        pass
     return False
 
 # --- FLUJO DE REGISTRO ---
+
+
 async def create_amazon():
 
     init_email()
@@ -210,7 +220,7 @@ async def create_amazon():
 
         browser = None
         captcha_solved = False
-        #otp_handled = False
+        # otp_handled = False
 
         try:
 
@@ -243,7 +253,6 @@ async def create_amazon():
                         captcha_solved = False
                     if state != "OTP_EMAIL":
                         otp_handled = False
-                        
 
                 if state == "LOGIN_PASSWORD":
 
@@ -278,7 +287,7 @@ async def create_amazon():
                     tiles = parse_tiles(response)
                     await solve_canvas_captcha(page, tiles)
                     send_log("Captcha enviado")
-                    
+
                     try:
                         await page.wait_for_function("""
                         () => !document.body.innerText.includes('Elija todo')
@@ -286,7 +295,7 @@ async def create_amazon():
                     except:
                         send_log("Captcha sigue presente")
                         await page.wait_for_timeout(3000)
-                
+
                 elif state == "OTP_EMAIL":
                     if otp_handled:
                         await asyncio.sleep(2)
@@ -306,7 +315,7 @@ async def create_amazon():
             send_log("✅ SUCCESS")
             break
 
-                else:
+               else:
                     send_log("⚠️ Estado desconocido")
                     text = await page.locator("body").inner_text()
                     send_log(text[:1500])
@@ -330,7 +339,9 @@ async def create_amazon():
 # --- BOT INTERFACE ---
 @bot.message_handler(commands=['start'])
 def start_cmd(message):
-    bot.reply_to(message, "ZeuS Bot Online. Usa /crear para una cuenta Amazon mx.")
+    bot.reply_to(
+        message, "ZeuS Bot Online. Usa /crear para una cuenta Amazon mx.")
+
 
 @bot.message_handler(commands=['crear'])
 def run_cmd(message):
@@ -344,6 +355,7 @@ def handle_message(message):
     global captcha_answer
 
     captcha_answer = message.text
+
 
 if __name__ == "__main__":
     send_log("🔥 Bot iniciado correctamente en Railway")
