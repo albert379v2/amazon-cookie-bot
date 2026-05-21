@@ -256,11 +256,29 @@ async def create_amazon():
                     await handle_register_form(page)
 
                 elif state == "CAPTCHA_CANVAS":
-
-                    send_log("CAPTCHA DETECTADO")
                     if captcha_solved:
                         await asyncio.sleep(2)
                         continue
+                    captcha_solved = True
+                    send_log("CAPTCHA DETECTADO")
+                    path = await capture_captcha(page)
+                    with open(path, "rb") as photo:
+                        bot.send_photo(CHAT_ID, photo)
+                    response = await wait_captcha_response()
+                    if not response:
+                        send_log("Timeout captcha")
+                        return
+                    tiles = parse_tiles(response)
+                    await solve_canvas_captcha(page, tiles)
+                    send_log("Captcha enviado")
+                    
+                    try:
+                        await page.wait_for_function("""
+                        () => !document.body.innerText.includes('Elija todo')
+                        """, timeout=10000)
+                    except:
+                        send_log("Captcha sigue presente")
+                        await page.wait_for_timeout(3000)
 
                 elif state == "OTP_EMAIL":
 
