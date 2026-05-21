@@ -2,34 +2,38 @@ async def detect_state(page):
 
     text = await page.locator("body").inner_text()
 
-    # LOGIN EXISTENTE
-    if "Amazon contraseña" in text:
-        return "LOGIN_PASSWORD"
-    #REGISTRAR O INICIAR SESION
+    text = text.lower()
+
+    # SIGNIN
     if "iniciar sesión o crear cuenta" in text:
         return "SIGNIN"
+
+    # LOGIN EXISTENTE
+    if "amazon contraseña" in text:
+        return "LOGIN_PASSWORD"
+
     # NUEVA CUENTA
-    if "Parece que eres nuevo en Amazon" in text:
+    if "parece que eres nuevo" in text:
         return "REGISTER_INTRO"
 
     # FORMULARIO
-    if "Crear cuenta" in text and "Nombre y apellido" in text:
+    if "nombre y apellido" in text:
         return "REGISTER_FORM"
 
     # CAPTCHA CANVAS
-    if "Elija todo" in text:
+    if "elija todo" in text:
         return "CAPTCHA_CANVAS"
 
-    # CAPTCHA ORBITAS
-    if "Utiliza las flechas" in text:
+    # CAPTCHA ORBIT
+    if "utiliza las flechas" in text:
         return "CAPTCHA_ORBIT"
 
     # OTP
-    if "Verifica la dirección de correo electrónico" in text:
+    if "verifica la dirección de correo electrónico" in text:
         return "OTP_EMAIL"
 
     # SUCCESS
-    if "Mi cuenta" in text:
+    if "mi cuenta" in text:
         return "SUCCESS"
 
     return "UNKNOWN"
