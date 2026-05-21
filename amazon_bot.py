@@ -308,30 +308,28 @@ async def create_amazon():
 
                     await handle_register_form(page)
 
-                elif state == "CAPTCHA_CANVAS":
-                    if captcha_solved:
-                        await asyncio.sleep(2)
-                        continue
-                    captcha_solved = True
-                    send_log("CAPTCHA DETECTADO")
-                    path = await capture_captcha(page)
-                    with open(path, "rb") as photo:
-                        bot.send_photo(CHAT_ID, photo)
-                    response = await wait_captcha_response()
-                    if not response:
-                        send_log("Timeout captcha")
-                        return
-                    tiles = parse_tiles(response)
-                    await solve_canvas_captcha(page, tiles)
-                    send_log("Captcha enviado")
 
-                    try:
-                        await page.wait_for_function("""
-                        () => !document.body.innerText.includes('Elija todo')
-                        """, timeout=10000)
-                    except:
-                        send_log("Captcha sigue presente")
-                        await page.wait_for_timeout(3000)
+
+                elif state == "CAPTCHA_DETECTED":
+                    send_log("🧩 CAPTCHA DETECTADO")
+                    await page.wait_for_timeout(1200)
+                    captcha_type = await detect_captcha_type(page)
+                    send_log(f"🧠 CAPTCHA TYPE => {captcha_type}")
+                    if captcha_type == "CAPTCHA_ORBIT":
+                        send_log("🌀 Iniciando rompecabezas")
+                        try:
+                            await page.click("text=Iniciar rompecabezas")
+                        except:
+                            send_log("❌ No se pudo iniciar rompecabezas")
+                            return
+                        await page.wait_for_timeout(2000)
+                    elif captcha_type == "CAPTCHA_CANVAS":
+                        pass
+                    else:
+                        send_log("⚠️ CAPTCHA desconocido")
+                        await debug(page, "captcha_unknown")
+                        return
+                        ###$
                 elif state == "OTP_EMAIL":
                     if otp_handled:
                         await asyncio.sleep(2)
