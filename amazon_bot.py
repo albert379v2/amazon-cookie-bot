@@ -176,6 +176,33 @@ def init_email():
     return testC
 
 
+#detectar captcha
+async def detect_captcha_base(page):
+
+    text = (await page.locator("body").inner_text()).lower()
+
+    if "resuelve esta adivinanza para proteger tu cuenta" in text:
+        return True
+
+    return False
+
+
+async def detect_captcha_type(page):
+
+    # ORBIT / ROMPECABEZAS
+    if await page.locator("text=Iniciar rompecabezas").count() > 0:
+        return "CAPTCHA_ORBIT"
+
+    if await page.locator("text=rompecabezas").count() > 0:
+        return "CAPTCHA_ORBIT"
+
+    # CANVAS (TU SISTEMA ACTUAL)
+    if await page.locator("canvas").count() > 0:
+        return "CAPTCHA_CANVAS"
+
+    return "CAPTCHA_UNKNOWN"
+    
+
 # --- RESOLUTOR DE CAPTCHA ---
 async def solve_captcha(page):
     try:
