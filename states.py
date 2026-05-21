@@ -42,7 +42,7 @@ async def detect_state(page):
         and "continuar" in text
     ):
         return "SIGNIN"
-    if "adivinanza" in text:
+    if "resuelve esta adivinanza para" in text:
         
         return "CAPTCHA_DETECTED"
     
