@@ -209,6 +209,7 @@ async def create_amazon():
     async with async_playwright() as p:
 
         browser = None
+        captcha_solved = False
 
         try:
 
@@ -231,7 +232,11 @@ async def create_amazon():
 
                 state = await detect_state(page)
 
-                send_log(f"STATE => {state}")
+                if state != last_state:
+                    send_log(f"STATE => {state}")
+                    last_state = state
+                    if state != "CAPTCHA_CANVAS":
+                        captcha_solved = False
 
                 if state == "LOGIN_PASSWORD":
 
@@ -253,6 +258,9 @@ async def create_amazon():
                 elif state == "CAPTCHA_CANVAS":
 
                     send_log("CAPTCHA DETECTADO")
+                    if captcha_solved:
+                        await asyncio.sleep(2)
+                        continue
 
                 elif state == "OTP_EMAIL":
 
