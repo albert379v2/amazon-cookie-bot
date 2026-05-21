@@ -6,16 +6,15 @@ async def detect_state(page):
     if "amazon contraseña" in text:
         return "LOGIN_PASSWORD"
 
-    # SIGNIN
-    if "ingresa el número de celular" in text:
-        return "SIGNIN"
-
-    # NUEVA CUENTA
+    # REGISTER INTRO
     if "parece que eres nuevo en amazon" in text:
         return "REGISTER_INTRO"
 
-    # FORMULARIO
-    if "crear cuenta" in text and "nombre y apellido" in text:
+    # REGISTER FORM
+    if (
+        "crear cuenta" in text
+        and "nombre y apellido" in text
+    ):
         return "REGISTER_FORM"
 
     # CAPTCHA CANVAS
@@ -33,5 +32,12 @@ async def detect_state(page):
     # SUCCESS
     if "mi cuenta" in text:
         return "SUCCESS"
+
+    # SIGNIN (SIEMPRE AL FINAL)
+    if (
+        "ingresa el número de celular" in text
+        and "continuar" in text
+    ):
+        return "SIGNIN"
 
     return "UNKNOWN"
