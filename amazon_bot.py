@@ -283,6 +283,7 @@ async def create_amazon():
                 send_log(f"STATE RAW => {state}")
                 if state == "UNKNOWN":
                     await page.wait_for_timeout(1500)
+                    await debug(page, "error desconocido espera")
                     continue
 
                 if state != last_state:
