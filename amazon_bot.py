@@ -328,6 +328,7 @@ async def create_amazon():
                     send_log("✅ SUCCESS")
                     break
                 else:
+                    await debug(page, "antes del error")
                     send_log("⚠️ Estado desconocido")
                     text = await page.locator("body").inner_text()
                     send_log(text[:1500])
