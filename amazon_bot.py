@@ -30,17 +30,20 @@ set_bot(bot)
 
 # iniciamos detección de captcha
 async def detect_canvas_captcha(page):
+    await page.wait_for_timeout(500)
+
+    
+    if await page.locator("canvas").count() > 0:
+        return True
 
     text = await page.locator("body").inner_text()
-
     if "elija todo" in text:
         return True
 
     if "Resuelve esta adivinanza" in text:
         return True
 
-    if await page.locator("canvas").count() > 0:
-        return True
+    
 
     return False
 
