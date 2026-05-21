@@ -1,4 +1,7 @@
 async def detect_state(page):
+    text = (await page.locator("body").inner_text()).lower()
+    if "resuelve esta adivinanza" in text:
+        return "CAPTCHA_DETECTED"
 
     # SIGNIN
     if await page.locator("#ap_email_login").count() > 0:
