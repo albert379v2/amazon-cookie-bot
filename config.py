@@ -1,7 +1,11 @@
 # config.py
-
 import os
 
+GRIZZLY_API_KEY = os.getenv("GRIZZLY_API_KEY")
+GRIZZLY_BASE_URL = os.getenv(
+    "GRIZZLY_BASE_URL",
+    "https://api.grizzlysms.com/stubs/handler_api.php"
+)
 # === CONFIGURACIÓN ===
 TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
