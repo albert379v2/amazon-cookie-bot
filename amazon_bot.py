@@ -269,6 +269,8 @@ async def create_amazon():
                 wait_until="domcontentloaded",
                 timeout=120000
             )
+            await page.wait_for_timeout(2000)
+            send_log("📍 PAGE READY")
             last_state = None
             captcha_solved = False
             otp_handled = False
