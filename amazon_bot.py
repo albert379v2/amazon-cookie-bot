@@ -295,47 +295,31 @@ async def create_amazon():
                     except:
                         send_log("Captcha sigue presente")
                         await page.wait_for_timeout(3000)
-
                 elif state == "OTP_EMAIL":
                     if otp_handled:
                         await asyncio.sleep(2)
                         continue
                     otp_handled = True
-                send_log(f"📩 Esperando OTP para: {testC}")
-                otp = wait_for_otp(testC)
-                if not otp:
-                    send_log("❌ OTP no recibido")
+                    send_log(f"📩 Esperando OTP para: {testC}")
+                    otp = wait_for_otp(testC)
+                    if not otp:
+                        send_log("❌ OTP no recibido")
+                        return
+                    send_log(f"🔢 OTP: {otp}")
+                    await page.fill("#cvf-input-code", otp)
+                    await page.click("#cvf-submit-otp-button")
+                    await page.wait_for_timeout(5000)
+                elif state == "SUCCESS":
+                    send_log("✅ SUCCESS")
+                    break
+                else:
+                    send_log("⚠️ Estado desconocido")
+                    text = await page.locator("body").inner_text()
+                    send_log(text[:1500])
+                    await debug(page, "unknown_state")
                     return
-                send_log(f"🔢 OTP: {otp}")
-                send_log(f"🔢 OTP: {otp}")
-
-                await page.fill("#cvf-input-code", otp)
-
-                await page.click("#cvf-submit-otp-button")
-
-                await page.wait_for_timeout(5000)
-
-            elif state == "SUCCESS":
-
-                send_log("✅ SUCCESS")
-
-                break
-
-            else:
-
-                send_log("⚠️ Estado desconocido")
-
-                text = await page.locator("body").inner_text()
-
-                send_log(text[:1500])
-
-                await debug(page, "unknown_state")
-
-                return
                 await asyncio.sleep(1)
-
         except Exception as e:
-
             send_log(f"⚠️ Error: {str(e)}")
 
         finally:
