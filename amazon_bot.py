@@ -241,6 +241,7 @@ async def create_amazon():
             last_state = None
             captcha_solved = False
             otp_handled = False
+            signin_handled = False
 
             while True:
 
@@ -249,6 +250,8 @@ async def create_amazon():
                 if state != last_state:
                     send_log(f"STATE => {state}")
                     last_state = state
+                    if state != "SIGNIN":
+                        signin_handled = False
                     if state != "CAPTCHA_CANVAS":
                         captcha_solved = False
                     if state != "OTP_EMAIL":
@@ -260,8 +263,15 @@ async def create_amazon():
                     return
 
                 elif state == "SIGNIN":
+                    if signin_handled:
+                        await asyncio.sleep(2)
+                        continue
+                    signin_handled = True
+                    send_log("✍️ Insertando correo")
                     await handle_signin(page, testC)
-                    await page.wait_for_timeout(3000)
+                    await page.wait_for_load_state("domcontentloaded")
+                    await debug(page, "registro")
+                    await page.wait_for_timeout(4000)
 
                 elif state == "REGISTER_INTRO":
 
