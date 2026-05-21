@@ -263,6 +263,7 @@ async def create_amazon():
 
             page = await context.new_page()
             send_log(f"🚀 Creando: {email}")
+            send_log("🔁 antes de goto")
             await page.goto(
                 "https://www.amazon.com.mx/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com.mx%2F%3F_encoding%3DUTF8%26ref_%3Dnavm_hdr_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=anywhere_v2_mx&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0",
                 wait_until="domcontentloaded",
@@ -272,10 +273,12 @@ async def create_amazon():
             captcha_solved = False
             otp_handled = False
             signin_handled = False
+            send_log("🔁 ENTER LOOP")
 
             while True:
 
                 state = await detect_state(page)
+                send_log(f"STATE RAW => {state}")
 
                 if state != last_state:
                     send_log(f"STATE => {state}")
