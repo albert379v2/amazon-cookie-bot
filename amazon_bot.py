@@ -420,11 +420,19 @@ async def create_amazon():
                         send_log("⚠️ CAPTCHA desconocido")
                         await debug(page, "captcha_unknown")
                         return
-                        ###$
+                        
                 elif state == "CAPTCHA_ORBIT_GAME":
                     send_log("🧠 Puzzle orbit abierto")
-                    await debug(page, "orbit_open")
-                    await page.wait_for_timeout(999999)
+                    try:
+                        iframe_element = page.frame_locator("#cvf-aamation-challenge-iframe")
+                        await page.wait_for_timeout(4000)
+                        body = iframe_element.locator("body")
+                        text = (await body.inner_text()).lower()
+                        send_log(f"📄 GAME TEXT => {text[:1000]}")
+                        await debug(page, "orbit_open")
+                    except Exception as e:
+                        send_log(f"❌ ORBIT ERR => {e}")
+                    return
 
 
                 
