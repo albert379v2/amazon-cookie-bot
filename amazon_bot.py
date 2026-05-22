@@ -421,6 +421,13 @@ async def create_amazon():
                         await debug(page, "captcha_unknown")
                         return
                         ###$
+                elif state == "CAPTCHA_ORBIT_GAME":
+                    send_log("🧠 Puzzle orbit abierto")
+                    await debug(page, "orbit_open")
+                    return
+
+
+                
                 elif state == "OTP_EMAIL":
                     if otp_handled:
                         await asyncio.sleep(2)
