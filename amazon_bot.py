@@ -193,33 +193,37 @@ async def detect_captcha_type(page):
 
     try:
 
-        frame = None
+        for frame in page.frames:
 
-        for f in page.frames:
+            try:
 
-            if "cvf" in f.url or "arkose" in f.url:
-                frame = f
-                break
+                # DEBUG
+                send_log(f"FRAME URL => {frame.url}")
 
-        if not frame:
-            return "CAPTCHA_UNKNOWN"
+                # CANVAS
+                canvas_count = await frame.locator("canvas").count()
 
-        # DEBUG
-        text = await frame.locator("body").inner_text()
+                if canvas_count > 0:
 
-        send_log(f"FRAME TEXT => {text[:500]}")
+                    send_log(f"CANVAS FOUND => {canvas_count}")
 
-        # CANVAS
-        if await frame.locator("canvas").count() > 0:
-            return "CAPTCHA_CANVAS"
+                    return "CAPTCHA_CANVAS"
 
-        # ORBIT
-        buttons = await frame.locator("button").all_inner_texts()
+                # BOTONES
+                buttons = await frame.locator("button").all_inner_texts()
 
-        for btn in buttons:
+                for btn in buttons:
 
-            if "rompecabezas" in btn.lower():
-                return "CAPTCHA_ORBIT"
+                    btn = btn.lower().strip()
+
+                    if "rompecabezas" in btn:
+                        return "CAPTCHA_ORBIT"
+
+                    if "iniciar" in btn:
+                        return "CAPTCHA_ORBIT"
+
+            except:
+                pass
 
         return "CAPTCHA_UNKNOWN"
 
