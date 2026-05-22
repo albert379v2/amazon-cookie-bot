@@ -25,8 +25,8 @@ async def detect_state(page):
                 return "CAPTCHA_ORBIT_GAME"
             if "envíe" in text:
                 return "CAPTCHA_ORBIT_GAME"
-            except:
-                pass
+        except:
+            pass
 
 
 
