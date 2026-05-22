@@ -376,17 +376,12 @@ async def create_amazon():
                     break
                 else:
                     send_log("⏳ UNKNOWN ESPERANDO RENDER...")
-                    await page.wait_for_timeout(4000)
+                    await page.wait_for_timeout(7000)
                     text_retry = (await page.locator("body").inner_text()).lower()
                     send_log(text_retry[:500])
-                    if "adivinanza" in text_retry:
+                    if "resuelve esta adivinanza" in text_retry:
                         send_log("🧩 CAPTCHA RECUPERADO")
-                        continue
-                    if "crear cuenta" in text_retry:
-                        send_log("📋 REGISTER_FORM RECUPERADO")
-                        continue
-                    if "parece que eres nuevo" in text_retry:
-                        send_log("👤 REGISTER INTRO RECUPERADO")
+                        state = "CAPTCHA_DETECTED"
                         continue
                         
                     await debug(page, "unknown_state_final")
