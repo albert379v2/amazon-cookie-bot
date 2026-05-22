@@ -11,4 +11,4 @@ async def handle_register_form(page):
     await page.fill("#ap_password", "Admin.2026.!")
 
     await page.click("#continue")
-    await page.wait_for_timeout(1000)
+    await page.wait_for_timeout(4000)
