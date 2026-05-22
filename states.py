@@ -12,9 +12,26 @@ async def detect_state(page):
     if await page.locator("text=Proceder a crear una cuenta").count() > 0:
         return "REGISTER_INTRO"
 
+
+
+
+    if await page.locator("button:has-text('Envíe')").count() > 0:
+    return "CAPTCHA_ORBIT_GAME"
+    
+    if await page.locator("text=Hazla coincidir").count() > 0:
+    return "CAPTCHA_ORBIT_GAME"
+    
+    if await page.locator("text=Utiliza las flechas").count() > 0:
+    return "CAPTCHA_ORBIT_GAME"
+
+
+
+    
+
     # REGISTER FORM
     if await page.locator("input[name='customerName']").count() > 0:
         return "REGISTER_FORM"
+        
 
     # OTP EMAIL
     if await page.locator("#cvf-input-code").count() > 0:
