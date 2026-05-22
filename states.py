@@ -1,6 +1,8 @@
 from utils import send_log
 
 async def detect_state(page):
+    if await page.locator("#cvf-aamation-challenge-iframe").count() > 0:
+        return "CAPTCHA_DETECTED"
 
     # LOGIN
     if await page.locator("#ap_email_login").count() > 0:
@@ -17,6 +19,7 @@ async def detect_state(page):
     # OTP EMAIL
     if await page.locator("#cvf-input-code").count() > 0:
         return "OTP_EMAIL"
+
 
     # CAPTCHA CANVAS
     if await page.locator("canvas").count() > 0:
