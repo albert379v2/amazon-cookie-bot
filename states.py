@@ -16,13 +16,13 @@ async def detect_state(page):
 
 
     if await page.locator("button:has-text('Envíe')").count() > 0:
-    return "CAPTCHA_ORBIT_GAME"
+        return "CAPTCHA_ORBIT_GAME"
     
     if await page.locator("text=Hazla coincidir").count() > 0:
-    return "CAPTCHA_ORBIT_GAME"
+        return "CAPTCHA_ORBIT_GAME"
     
     if await page.locator("text=Utiliza las flechas").count() > 0:
-    return "CAPTCHA_ORBIT_GAME"
+        return "CAPTCHA_ORBIT_GAME"
 
 
 
