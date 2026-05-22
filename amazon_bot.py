@@ -192,16 +192,22 @@ async def detect_captcha_base(page):
 
 async def detect_captcha_type(page):
 
-    # ORBIT / ROMPECABEZAS
-    if await page.locator("text=Iniciar rompecabezas").count() > 0:
-        return "CAPTCHA_ORBIT"
+    try:
 
-    if await page.locator("text=rompecabezas").count() > 0:
-        return "CAPTCHA_ORBIT"
+        frame = page.frame_locator(
+            "#cvf-aamation-challenge-iframe"
+        )
 
-    # CANVAS (TU SISTEMA ACTUAL)
-    if await page.locator("canvas").count() > 0:
-        return "CAPTCHA_CANVAS"
+        # CANVAS
+        if await frame.locator("canvas").count() > 0:
+            return "CAPTCHA_CANVAS"
+
+        # ORBIT
+        if await frame.locator("button").count() > 0:
+            return "CAPTCHA_ORBIT"
+
+    except:
+        pass
 
     return "CAPTCHA_UNKNOWN"
     
