@@ -286,7 +286,24 @@ async def create_amazon():
                     await page.wait_for_load_state("networkidle", timeout=15000)
                 except:
                     pass
-                await page.wait_for_timeout(4000)
+                try:
+                    await page.wait_for_function("""
+                    () => {
+                    const text = document.body.innerText.toLowerCase()
+                    return (
+                    text.includes('resuelve esta adivinanza')
+                    || document.querySelector('canvas')
+                    || text.includes('rompecabezas')
+                    )
+                    }
+                    """, timeout=8000)
+                    send_log("🧩 Challenge renderizado")
+                except:
+                    pass
+
+                
+                #await page.wait_for_timeout(4000)
+                
                 
                 state = await detect_state(page)
                 text_debug = (await page.locator("body").inner_text()).lower()
