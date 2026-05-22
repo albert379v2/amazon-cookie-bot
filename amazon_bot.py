@@ -375,12 +375,24 @@ async def create_amazon():
                     send_log("✅ SUCCESS")
                     break
                 else:
-                    await debug(page, "antes del error")
-                    send_log("⚠️ Estado desconocido")
-                    text = await page.locator("body").inner_text()
-                    send_log(text[:1500])
-                    await debug(page, "unknown_state")
+                    send_log("⏳ UNKNOWN ESPERANDO RENDER...")
+                    await page.wait_for_timeout(4000)
+                    text_retry = (await page.locator("body").inner_text()).lower()
+                    send_log(text_retry[:500])
+                    if "adivinanza" in text_retry:
+                        send_log("🧩 CAPTCHA RECUPERADO")
+                        continue
+                    if "crear cuenta" in text_retry:
+                        send_log("📋 REGISTER_FORM RECUPERADO")
+                        continue
+                    if "parece que eres nuevo" in text_retry:
+                        send_log("👤 REGISTER INTRO RECUPERADO")
+                        continue
+                        
+                    await debug(page, "unknown_state_final")
+                    send_log("❌ UNKNOWN REAL")
                     return
+                    
                 await asyncio.sleep(1)
         except Exception as e:
             send_log(f"⚠️ Error: {str(e)}")
