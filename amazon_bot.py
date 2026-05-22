@@ -394,11 +394,25 @@ async def create_amazon():
                     send_log(page.url)
                     if captcha_type == "CAPTCHA_ORBIT":
                         send_log("🌀 Iniciando rompecabezas")
-                        try:
-                            await page.click("text=Iniciar rompecabezas")
-                        except:
+                        clicked = False
+                        for frame in page.frames:
+                            try:
+                                send_log(f"SEARCH FRAME => {frame.url}")
+                                btn = frame.locator("button").first
+                                await btn.wait_for(timeout=5000)
+                                text = await btn.inner_text()
+                                send_log(f"BTN => {text}")
+                                await btn.click(force=True)
+                                send_log("✅ Puzzle iniciado")
+                                clicked = True
+                                break
+                            except Exception as e:
+                                send_log(f"FRAME FAIL => {e}")
+                        if not clicked:
                             send_log("❌ No se pudo iniciar rompecabezas")
+                            await debug(page, "orbit_fail")
                             return
+                            
                         await page.wait_for_timeout(2000)
                     elif captcha_type == "CAPTCHA_CANVAS":
                         pass
