@@ -278,7 +278,16 @@ async def create_amazon():
             send_log("🔁 ENTER LOOP")
 
             while True:
-                await page.wait_for_timeout(1200)  # 👈 ESTABILIDAD
+                try:
+                    await page.wait_for_load_state("domcontentloaded", timeout=15000)
+                except:
+                    pass
+                try:
+                    await page.wait_for_load_state("networkidle", timeout=15000)
+                except:
+                    pass
+                await page.wait_for_timeout(4000)
+                
                 state = await detect_state(page)
                 text_debug = (await page.locator("body").inner_text()).lower()
                 send_log(text_debug[:500])
