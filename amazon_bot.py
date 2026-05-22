@@ -308,6 +308,7 @@ async def create_amazon():
                 state = await detect_state(page)
                 text_debug = (await page.locator("body").inner_text()).lower()
                 send_log(text_debug[:500])
+                send_log(page.url)
                 send_log(f"STATE RAW => {state}")
                 if state == "UNKNOWN":
                     text = (await page.locator("body").inner_text()).lower()
