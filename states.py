@@ -1,13 +1,8 @@
 from utils import send_log
 
 async def detect_state(page):
-    send_log(page.url)
-    text = (await page.locator("body").inner_text()).lower()
-    send_log(f"DEBUG CAPTCHA => {'adivinanza' in text}")
-    if "resuelve esta adivinanza" in text:
-        return "CAPTCHA_DETECTED"
 
-    # SIGNIN
+    # LOGIN
     if await page.locator("#ap_email_login").count() > 0:
         return "SIGNIN"
 
@@ -19,26 +14,20 @@ async def detect_state(page):
     if await page.locator("input[name='customerName']").count() > 0:
         return "REGISTER_FORM"
 
+    # OTP EMAIL
+    if await page.locator("#cvf-input-code").count() > 0:
+        return "OTP_EMAIL"
+
     # CAPTCHA CANVAS
     if await page.locator("canvas").count() > 0:
         return "CAPTCHA_CANVAS"
 
     # CAPTCHA ORBIT
-    if await page.locator("text=rompecabezas").count() > 0:
+    if await page.locator("text=Iniciar rompecabezas").count() > 0:
         return "CAPTCHA_ORBIT"
 
-    # OTP EMAIL
-    if await page.locator("#cvf-input-code").count() > 0:
-        return "OTP_EMAIL"
-
-    # OTP PHONE
-    text = (await page.locator("body").inner_text()).lower()
-
-    if "agregar un número de teléfono móvil" in text:
-        return "OTP_PHONE"
-
     # SUCCESS
-    if "mi cuenta" in text:
+    if await page.locator("#nav-link-accountList").count() > 0:
         return "SUCCESS"
 
     return "UNKNOWN"
