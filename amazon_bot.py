@@ -424,7 +424,7 @@ async def create_amazon():
                 elif state == "CAPTCHA_ORBIT_GAME":
                     send_log("🧠 Puzzle orbit abierto")
                     await debug(page, "orbit_open")
-                    return
+                    await page.wait_for_timeout(999999)
 
 
                 
