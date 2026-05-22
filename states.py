@@ -1,6 +1,7 @@
 from utils import send_log
 
 async def detect_state(page):
+    send_log(page.url)
     text = (await page.locator("body").inner_text()).lower()
     send_log(f"DEBUG CAPTCHA => {'adivinanza' in text}")
     if "resuelve esta adivinanza" in text:
