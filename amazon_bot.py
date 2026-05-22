@@ -189,27 +189,45 @@ async def detect_captcha_base(page):
 
     return False
 
-
 async def detect_captcha_type(page):
 
     try:
 
-        frame = page.frame_locator(
-            "#cvf-aamation-challenge-iframe"
-        )
+        frame = None
+
+        for f in page.frames:
+
+            if "cvf" in f.url or "arkose" in f.url:
+                frame = f
+                break
+
+        if not frame:
+            return "CAPTCHA_UNKNOWN"
+
+        # DEBUG
+        text = await frame.locator("body").inner_text()
+
+        send_log(f"FRAME TEXT => {text[:500]}")
 
         # CANVAS
         if await frame.locator("canvas").count() > 0:
             return "CAPTCHA_CANVAS"
 
         # ORBIT
-        if await frame.locator("button").count() > 0:
-            return "CAPTCHA_ORBIT"
+        buttons = await frame.locator("button").all_inner_texts()
 
-    except:
-        pass
+        for btn in buttons:
 
-    return "CAPTCHA_UNKNOWN"
+            if "rompecabezas" in btn.lower():
+                return "CAPTCHA_ORBIT"
+
+        return "CAPTCHA_UNKNOWN"
+
+    except Exception as e:
+
+        send_log(f"CAPTCHA TYPE ERROR => {e}")
+
+        return "CAPTCHA_UNKNOWN"
     
 
 # --- RESOLUTOR DE CAPTCHA ---
