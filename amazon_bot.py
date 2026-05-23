@@ -12,15 +12,6 @@ from playwright.async_api import async_playwright
 from config import *
 from utils import set_bot, safe_name, send_log, send_screenshot, take_screenshot, debug
 from gmail.gmail_reader import wait_for_otp
-from states import detect_state
-from handlers.login import (
-    handle_login_password,
-    handle_signin
-)
-from handlers.register import (
-    handle_register_intro,
-    handle_register_form
-)
 
 # === CONFIGURACIÓN ===
 
@@ -28,28 +19,23 @@ bot = telebot.TeleBot(TOKEN)
 set_bot(bot)
 
 
-# iniciamos detección de captcha
+#iniciamos detección de captcha
 async def detect_canvas_captcha(page):
-    await page.wait_for_timeout(500)
-
-    
-    if await page.locator("canvas").count() > 0:
-        return True
 
     text = await page.locator("body").inner_text()
-    if "elija todo" in text:
+
+    if "Elija todo" in text:
         return True
 
     if "Resuelve esta adivinanza" in text:
         return True
 
-    
+    if await page.locator("canvas").count() > 0:
+        return True
 
     return False
 
-# captura del captcha
-
-
+#captura del captcha
 async def capture_captcha(page):
 
     canvas = page.locator("canvas").first
@@ -58,8 +44,7 @@ async def capture_captcha(page):
 
     return "captcha.png"
 
-# click sobre tiles
-
+#click sobre tiles
 
 async def click_captcha_tile(page, tile):
 
@@ -86,10 +71,8 @@ async def click_captcha_tile(page, tile):
 
     await page.mouse.click(x, y)
 
-# resolv tiles
-# resolv tiles
-
-
+#resolv tiles
+#resolv tiles
 async def solve_canvas_captcha(page, tiles):
 
     for tile in tiles:
@@ -120,8 +103,6 @@ async def solve_canvas_captcha(page, tiles):
     await page.click("#amzn-btn-verify-internal")
 
 ###
-
-
 def parse_tiles(text):
 
     numbers = re.findall(r"\d+", text)
@@ -130,6 +111,7 @@ def parse_tiles(text):
 
 
 captcha_answer = None
+
 
 
 async def wait_captcha_response(timeout=120):
@@ -157,15 +139,14 @@ async def wait_captcha_response(timeout=120):
         await asyncio.sleep(1)
 
 
+
 # --- MANEJO DE CORREO (MAIL.TM API) ---
 
 # --- MANEJO DE CORREO ---
 
-names = ["alexxx", "marrria", "carrrlos",
-    "annna", "jooose", "luuuuis", "daaani"]
+names = ["alexxx", "marrria", "carrrlos", "annna", "jooose", "luuuuis", "daaani"]
 
 testC = None
-
 
 def generate_gmail():
     name = random.choice(names)
@@ -179,68 +160,13 @@ def init_email():
     return testC
 
 
-#detectar captcha
-async def detect_captcha_base(page):
-
-    text = (await page.locator("body").inner_text()).lower()
-
-    if "resuelve esta adivinanza para proteger tu cuenta" in text:
-        return True
-
-    return False
-
-async def detect_captcha_type(page):
-
-    try:
-
-        for frame in page.frames:
-
-            try:
-
-                # DEBUG
-                send_log(f"FRAME URL => {frame.url}")
-
-                # CANVAS
-                canvas_count = await frame.locator("canvas").count()
-
-                if canvas_count > 0:
-
-                    send_log(f"CANVAS FOUND => {canvas_count}")
-
-                    return "CAPTCHA_CANVAS"
-
-                # BOTONES
-                buttons = await frame.locator("button").all_inner_texts()
-
-                for btn in buttons:
-
-                    btn = btn.lower().strip()
-
-                    if "rompecabezas" in btn:
-                        return "CAPTCHA_ORBIT"
-
-                    if "iniciar" in btn:
-                        return "CAPTCHA_ORBIT"
-
-            except:
-                pass
-
-        return "CAPTCHA_UNKNOWN"
-
-    except Exception as e:
-
-        send_log(f"CAPTCHA TYPE ERROR => {e}")
-
-        return "CAPTCHA_UNKNOWN"
     
-
 # --- RESOLUTOR DE CAPTCHA ---
 async def solve_captcha(page):
     try:
         captcha_img = await page.query_selector('img[src*="captcha"]')
-        if not captcha_img:
-            return False
-
+        if not captcha_img: return False
+        
         img_url = await captcha_img.get_attribute("src")
         img_res = requests.get(img_url, timeout=35)
         img_b64 = base64.b64encode(img_res.content).decode('utf-8')
@@ -248,7 +174,7 @@ async def solve_captcha(page):
         task = requests.post("https://api.anti-captcha.com/createTask", json={
             "clientKey": AC_KEY, "task": {"type": "ImageToTextTask", "body": img_b64}
         }).json()
-
+        
         task_id = task.get("taskId")
         for _ in range(15):
             await asyncio.sleep(3)
@@ -261,238 +187,133 @@ async def solve_captcha(page):
                 await page.fill("#captchacharacters", text)
                 await page.press("#captchacharacters", "Enter")
                 return True
-    except:
-        pass
+    except: pass
     return False
 
 # --- FLUJO DE REGISTRO ---
-
-
 async def create_amazon():
-
     init_email()
-
+    send_log(testC)
     email = testC
-
+    
     async with async_playwright() as p:
-
-        browser = None
-        captcha_solved = False
-        # otp_handled = False
-
         try:
+            browser = await p.chromium.launch(headless=True, proxy=PROXY_CONFIG)
+            async def new_clean_page():
+                context = await browser.new_context(
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0"
+                )
+                page = await context.new_page()
+                return context, page
 
-            browser = await p.chromium.launch(
-                headless=True,
-                proxy=PROXY_CONFIG
-            )
+            # ✅ AQUÍ SE CREA REALMENTE page
+            context, page = await new_clean_page()
 
-            context = await browser.new_context()
-
-            page = await context.new_page()
-            send_log(f"🚀 Creando: {email}")
-            send_log("🔁 antes de goto")
+            send_log(f"🚀 Creando: `{email}`")
+            send_log("E7 - Entrando a Amazon")
+            await debug(page, "0create_mail")
             await page.goto(
-                "https://www.amazon.com.mx/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com.mx%2F%3F_encoding%3DUTF8%26ref_%3Dnavm_hdr_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=anywhere_v2_mx&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0",
-                wait_until="domcontentloaded",
-                timeout=120000
-            )
+    "https://www.amazon.com.mx/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com.mx%2F%3F_encoding%3DUTF8%26ref_%3Dnavm_hdr_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=anywhere_v2_mx&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0",
+    wait_until="domcontentloaded",
+    timeout=120000
+)
+            await page.wait_for_load_state("domcontentloaded")
             await page.wait_for_timeout(2000)
-            send_log("📍 PAGE READY")
-            last_state = None
-            captcha_solved = False
-            otp_handled = False
-            signin_handled = False
-            send_log("🔁 ENTER LOOP")
+            
+            send_log(page.url)
+            await debug(page, "amazon_link")
 
-            while True:
-                try:
-                    await page.wait_for_load_state("domcontentloaded", timeout=15000)
-                except:
-                    pass
-                try:
-                    await page.wait_for_load_state("networkidle", timeout=15000)
-                except:
-                    pass
-                try:
-                    await page.wait_for_function("""
-                    () => {
-                    const text = document.body.innerText.toLowerCase()
-                    return (
-                    text.includes('resuelve esta adivinanza')
-                    || document.querySelector('canvas')
-                    || text.includes('rompecabezas')
-                    )
-                    }
-                    """, timeout=8000)
-                    send_log("🧩 Challenge renderizado")
-                except:
-                    pass
-
-                
-                #await page.wait_for_timeout(4000)
-                
-                
-                state = await detect_state(page)
-                text_debug = (await page.locator("body").inner_text()).lower()
-                send_log(text_debug[:500])
-                send_log(page.url)
-                send_log(f"STATE RAW => {state}")
-                if state == "UNKNOWN":
-                    text = (await page.locator("body").inner_text()).lower()
-                    if "adivinanza" in text:
-                        state = "CAPTCHA_DETECTED"
-                    else:
-                        await page.wait_for_timeout(1500)
-                        await debug(page, "error desconocido espera")
-                        continue
-
-
-                if state != last_state:
-                    send_log(f"STATE => {state}")
-                    last_state = state
-                    if state != "SIGNIN":
-                        signin_handled = False
-                    if state != "CAPTCHA_CANVAS":
-                        captcha_solved = False
-                    if state != "OTP_EMAIL":
-                        otp_handled = False
-
-                if state == "LOGIN_PASSWORD":
-
-                    await handle_login_password(page)
-                    return
-
-                elif state == "SIGNIN":
-                    if signin_handled:
-                        await asyncio.sleep(2)
-                        continue
-                    signin_handled = True
-                    send_log("✍️ Insertando correo")
-                    await handle_signin(page, testC)
-                    await page.wait_for_timeout(2500)
-                    #await page.wait_for_load_state("domcontentloaded")
-                    await debug(page, "registro")
-                    await page.wait_for_timeout(4000)
-
-                elif state == "REGISTER_INTRO":
-
-                    await handle_register_intro(page)
-
-                elif state == "REGISTER_FORM":
-
-                    await handle_register_form(page)
-
-
-
-                elif state == "CAPTCHA_DETECTED":
-                    await page.wait_for_timeout(1200)
-                    send_log("🧩 CAPTCHA DETECTADO")
-                    await page.wait_for_timeout(1200)
-                    captcha_type = await detect_captcha_type(page)
-                    send_log(f"🧠 CAPTCHA TYPE => {captcha_type}")
-                    send_log(page.url)
-                    if captcha_type == "CAPTCHA_ORBIT":
-                        send_log("🌀 Iniciando rompecabezas")
-                        clicked = False
-                        for frame in page.frames:
-                            try:
-                                send_log(f"SEARCH FRAME => {frame.url}")
-                                btn = frame.locator("button").first
-                                await btn.wait_for(timeout=5000)
-                                text = await btn.inner_text()
-                                send_log(f"BTN => {text}")
-                                await btn.click(force=True)
-                                send_log("✅ Puzzle iniciado")
-                                clicked = True
-                                break
-                            except Exception as e:
-                                send_log(f"FRAME FAIL => {e}")
-                        if not clicked:
-                            send_log("❌ No se pudo iniciar rompecabezas")
-                            await debug(page, "orbit_fail")
-                            return
-                            
-                        await page.wait_for_timeout(2000)
-                    elif captcha_type == "CAPTCHA_CANVAS":
-                        pass
-                    else:
-                        send_log("⚠️ CAPTCHA desconocido")
-                        await debug(page, "captcha_unknown")
+            send_log("E8 - Amazon cargó")
+            await solve_captcha(page)
+            send_log("E9 - tiene captcha 1")
+            
+            send_log("F1")
+            await page.fill("#ap_email_login", testC)
+            await debug(page, "01_insert_email")
+            send_log("F2")
+            await page.click("#continue")
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_timeout(2000)
+            await debug(page, "01_click_continue")
+            send_log("F2 vontinue1")
+            await page.click("#intention-submit-button")
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_timeout(2000)
+            await debug(page, "01_click_comfirregister")
+            send_log("Fllemar datos")
+            await page.fill("#ap_customer_name", "Jhonatan aldama")            
+            send_log("F3")
+            await page.fill("#ap_password", "Admin.2026.!")
+            await debug(page, "01_formulario")
+            send_log("F4")
+            ##await page.fill("#ap_password_check", "Admin.2026.!")
+            send_log("F5 inicia click")
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_timeout(2000)
+            await page.click("#continue")
+            ##await page.click("#continue")
+            send_log("F6 click exitoso")
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_timeout(2000)
+            await debug(page, "01_click_registrtage")
+            send_log("E8 - se lleno formulario")
+            send_log(page.url)
+            await asyncio.sleep(5)
+            await solve_captcha(page)
+            send_log(page.url)
+            send_log("E8 - captcha2")
+            await debug(page, "captcha_final")
+            await page.wait_for_load_state("domcontentloaded")
+            if await detect_canvas_captcha(page):
+                send_log("CAPTCHA CANVAS DETECTADO")
+                await debug(page, "canvas_detected")
+                path = await capture_captcha(page)
+                with open(path, "rb") as photo:
+                    bot.send_photo(CHAT_ID, photo)
+                    bot.send_message(
+                    CHAT_ID,
+                    "Responde con las casillas.\nEjemplo: 2 5 8"
+                )
+                    response = await wait_captcha_response()
+                    if not response:
+                        send_log("Timeout captcha")
                         return
-                        
-                elif state == "CAPTCHA_ORBIT_GAME":
-                    send_log("🧠 Puzzle orbit abierto")
-                    try:
-                        iframe_element = page.frame_locator("#cvf-aamation-challenge-iframe")
-                        await page.wait_for_timeout(4000)
-                        body = iframe_element.locator("body")
-                        text = (await body.inner_text()).lower()
-                        send_log(f"📄 GAME TEXT => {text[:1000]}")
-                        await debug(page, "orbit_open")
-                    except Exception as e:
-                        send_log(f"❌ ORBIT ERR => {e}")
-                    return
-
-
-                
-                elif state == "OTP_EMAIL":
-                    if otp_handled:
-                        await asyncio.sleep(2)
-                        continue
-                    otp_handled = True
-                    send_log(f"📩 Esperando OTP para: {testC}")
-                    otp = wait_for_otp(testC)
-                    if not otp:
-                        send_log("❌ OTP no recibido")
-                        return
-                    send_log(f"🔢 OTP: {otp}")
-                    await page.fill("#cvf-input-code", otp)
-                    await page.click("#cvf-submit-otp-button")
-                    await page.wait_for_timeout(5000)
-                elif state == "OTP_PHONE":
-                    send_log("📱 OTP PHONE DETECTADO")
-                    send_log(page.url)
-                    await debug(page, "otp_phone")
-                    return
-                elif state == "SUCCESS":
-                    send_log("✅ SUCCESS")
-                    break
-                else:
-                    send_log("⏳ UNKNOWN ESPERANDO RENDER...")
-                    await page.wait_for_timeout(7000)
-                    text_retry = (await page.locator("body").inner_text()).lower()
-                    send_log(text_retry[:500])
-                    if "resuelve esta adivinanza" in text_retry:
-                        send_log("🧩 CAPTCHA RECUPERADO")
-                        state = "CAPTCHA_DETECTED"
-                        continue
-                        
-                    await debug(page, "unknown_state_final")
-                    send_log("❌ UNKNOWN REAL")
-                    return
-                    
-                await asyncio.sleep(1)
+                    tiles = parse_tiles(response)
+                    send_log(f"Tiles: {tiles}")
+                    await solve_canvas_captcha(page, tiles)
+                    send_log("Captcha resuelto")
+                await page.wait_for_timeout(4000)
+                await debug(page, "captcha_reduelto")
+                send_log(f"📩 Esperando OTP para: {testC}")
+            otp = wait_for_otp(testC)
+            if otp:
+                send_log(f"🔢 OTP: `{otp}`")
+                await page.fill("#cvf-input-code", otp)
+                await page.wait_for_timeout(3000)
+                await debug(page, "otp_reduelto")
+                await page.click("#cvf-submit-otp-button")
+                await page.wait_for_timeout(11000)
+                await debug(page, "tel_otp")
+                send_log("E8 - se obtuvo codigo")
+                cookies = await context.cookies()
+                with open("session.json", "w") as f: json.dump(cookies, f)
+                with open("session.json", "rb") as f:
+                    bot.send_document(CHAT_ID, f, caption=f"✅ Amazon Creada: {email}")
+            else:
+                send_log("❌ OTP no recibido.")
         except Exception as e:
             send_log(f"⚠️ Error: {str(e)}")
-
         finally:
-
-            if browser:
-
-                await browser.close()
-
+            await browser.close()
 
 # --- BOT INTERFACE ---
 @bot.message_handler(commands=['start'])
 def start_cmd(message):
-    bot.reply_to(
-        message, "ZeuS Bot Online. Usa /crear para una cuenta Amazon mx.")
-
+    bot.reply_to(message, "ZeuS Bot Online. Usa /crear para una cuenta Amazon.")
 
 @bot.message_handler(commands=['crear'])
 def run_cmd(message):
-    bot.reply_to(message, "⚙️ Iniciando proceso1...")
+    bot.reply_to(message, "⚙️ Iniciando proceso...")
     asyncio.run(create_amazon())
 
 
@@ -503,7 +324,7 @@ def handle_message(message):
 
     captcha_answer = message.text
 
-
 if __name__ == "__main__":
     send_log("🔥 Bot iniciado correctamente en Railway")
     bot.infinity_polling()
+
