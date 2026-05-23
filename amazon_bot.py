@@ -294,37 +294,6 @@ async def create_amazon():
                     send_log(f"Tiles: {tiles}")
                     await solve_canvas_captcha(page, tiles)
                     send_log("Captcha resuelto")
-
-
-        
-
-            
-
-            
-            send_log(page.url)
-            send_log("E8 - captcha2")
-            await debug(page, "captcha_final")
-            await page.wait_for_load_state("domcontentloaded")
-            if await detect_canvas_captcha(page):
-                send_log("CAPTCHA CANVAS DETECTADO")
-                await debug(page, "canvas_detected")
-                path = await capture_captcha(page)
-                with open(path, "rb") as photo:
-                    bot.send_photo(CHAT_ID, photo)
-                    bot.send_message(
-                    CHAT_ID,
-                    "Responde con las casillas.\nEjemplo: 2 5 8"
-                )
-                    response = await wait_captcha_response()
-                    if not response:
-                        send_log("Timeout captcha")
-                        return
-                    tiles = parse_tiles(response)
-                    send_log(f"Tiles: {tiles}")
-                    await solve_canvas_captcha(page, tiles)
-                    send_log("Captcha resuelto")
-                await page.wait_for_timeout(4000)
-                await debug(page, "captcha_reduelto")
                 send_log(f"📩 Esperando OTP para: {testC}")
             otp = wait_for_otp(testC)
             if otp:
