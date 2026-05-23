@@ -260,6 +260,23 @@ async def create_amazon():
             send_log(page.url)
             await asyncio.sleep(5)
             await solve_captcha(page)
+            await page.wait_for_timeout(8000)
+            try:
+                await page.wait_for_function("""
+                () => {
+                const text = document.body.innerText.toLowerCase()
+                
+                return (
+                text.includes('resuelve esta adivinanza')
+                || text.includes('elija todo')
+                || document.querySelector('canvas')
+                || document.querySelector('#cvf-aamation-challenge-iframe')
+                )
+                }
+                """, timeout=15000)
+                send_log("🧩 Challenge renderizado")
+            except:
+                send_log("⚠️ Challenge no detectado aún")
             if await detect_canvas_captcha(page):
                 send_log("CAPTCHA DETECTADO")
                 text = (await page.locator("body").inner_text()).lower()
