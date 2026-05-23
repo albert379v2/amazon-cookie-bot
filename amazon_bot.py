@@ -320,7 +320,13 @@ async def create_amazon():
                                     if "rompecabezas" in text or "iniciar" in text:
                                         send_log(f"✅ CLICK BTN => {text}")
                                         await btn.click(force=True)
-                                        await page.wait_for_timeout(4000)
+                                        await page.wait_for_timeout(5000)
+                                        for frame in page.frames:
+                                            try:
+                                                text = await frame.locator("body").inner_text()
+                                                send_log(f"FRAME TEXT => {text[:1000]}")
+                                            except:
+                                                pass
                                         await debug(page, "orbit_started")
                                         found = True
                                         break
