@@ -263,7 +263,8 @@ async def create_amazon():
             if await detect_canvas_captcha(page):
                 send_log("CAPTCHA DETECTADO")
                 text = (await page.locator("body").inner_text()).lower()
-                if "resuelve esta adivinanza" in text:
+                orbit_iframe = page.locator("#cvf-aamation-challenge-iframe")
+                if await orbit_iframe.count() > 0:
                     send_log("ORBIT DETECTADO")
                     iframe = page.locator("#cvf-aamation-challenge-iframe")
                     if await iframe.count() > 0:
