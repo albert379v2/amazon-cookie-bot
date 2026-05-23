@@ -392,28 +392,26 @@ async def create_amazon():
                     captcha_type = await detect_captcha_type(page)
                     send_log(f"🧠 CAPTCHA TYPE => {captcha_type}")
                     send_log(page.url)
+
+                    
                     if captcha_type == "CAPTCHA_ORBIT":
                         send_log("🌀 Iniciando rompecabezas")
-                        clicked = False
-                        for frame in page.frames:
-                            try:
-                                send_log(f"SEARCH FRAME => {frame.url}")
-                                btn = frame.locator("button").first
-                                await btn.wait_for(timeout=5000)
-                                text = await btn.inner_text()
-                                send_log(f"BTN => {text}")
-                                await btn.click(force=True)
-                                send_log("✅ Puzzle iniciado")
-                                clicked = True
-                                break
-                            except Exception as e:
-                                send_log(f"FRAME FAIL => {e}")
-                        if not clicked:
-                            send_log("❌ No se pudo iniciar rompecabezas")
+                        try:
+                            frame = page.frame_locator("#cvf-aamation-challenge-iframe")
+                            btn = frame.locator("button")
+                            await btn.first.wait_for(timeout=15000)
+                            text = await btn.first.inner_text()
+                            send_log(f"BTN => {text}")
+                            await btn.first.click(force=True)
+                            send_log("✅ Puzzle iniciado")
+                            await page.wait_for_timeout(4000)
+                        except Exception as e:
+                            send_log(f"❌ ORBIT START ERR => {e}")
                             await debug(page, "orbit_fail")
                             return
-                            
-                        await page.wait_for_timeout(2000)
+
+
+                    
                     elif captcha_type == "CAPTCHA_CANVAS":
                         pass
                     else:
