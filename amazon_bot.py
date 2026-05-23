@@ -22,18 +22,40 @@ set_bot(bot)
 #iniciamos detección de captcha
 async def detect_canvas_captcha(page):
 
-    text = await page.locator("body").inner_text()
+    try:
 
-    if "Elija todo" in text:
-        return True
+        # Detectar iframe Orbit
+        orbit = page.locator("#cvf-aamation-challenge-iframe")
 
-    if "Resuelve esta adivinanza" in text:
-        return True
+        if await orbit.count() > 0:
+            send_log("🛰️ iframe orbit encontrado")
+            return True
 
-    if await page.locator("canvas").count() > 0:
-        return True
+        # Detectar canvas
+        canvas = page.locator("canvas")
 
-    return False
+        if await canvas.count() > 0:
+            send_log("🖼️ canvas encontrado")
+            return True
+
+        # Detectar texto
+        text = (await page.locator("body").inner_text()).lower()
+
+        if "resuelve esta adivinanza" in text:
+            send_log("🧠 texto orbit encontrado")
+            return True
+
+        if "elija todo" in text:
+            send_log("🧠 texto canvas encontrado")
+            return True
+
+        return False
+
+    except Exception as e:
+
+        send_log(f"❌ detect captcha err => {e}")
+
+        return False
 
 #captura del captcha
 async def capture_captcha(page):
