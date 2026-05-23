@@ -311,6 +311,12 @@ async def create_amazon():
                         body = frame.locator("body")
                         text = await body.inner_text()
                         send_log(f"🧠 ORBIT TEXT => {text[:2000]}")
+                        buttons = frame.locator("button")
+                        count = await buttons.count()
+                        send_log(f"🔘 BUTTON COUNT => {count}")
+                        if count > 0:
+                            texts = await buttons.all_inner_texts()
+                            send_log(f"🔘 BUTTON TEXTS => {texts}")
                     except Exception as e:
                         send_log(f"❌ ORBIT READ ERR => {e}")
                     iframe = page.locator("#cvf-aamation-challenge-iframe")
