@@ -305,6 +305,14 @@ async def create_amazon():
                 orbit_iframe = page.locator("#cvf-aamation-challenge-iframe")
                 if await orbit_iframe.count() > 0:
                     send_log("ORBIT DETECTADO")
+                    frame = page.frame_locator("#cvf-aamation-challenge-iframe")
+                    await page.wait_for_timeout(4000)
+                    try:
+                        body = frame.locator("body")
+                        text = await body.inner_text()
+                        send_log(f"🧠 ORBIT TEXT => {text[:2000]}")
+                    except Exception as e:
+                        send_log(f"❌ ORBIT READ ERR => {e}")
                     iframe = page.locator("#cvf-aamation-challenge-iframe")
                     if await iframe.count() > 0:
                         await iframe.screenshot(path="orbit.png")
