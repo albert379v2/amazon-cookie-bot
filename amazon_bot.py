@@ -397,14 +397,15 @@ async def create_amazon():
                     if captcha_type == "CAPTCHA_ORBIT":
                         send_log("🌀 Iniciando rompecabezas")
                         try:
+                            await page.wait_for_timeout(5000)
                             frame = page.frame_locator("#cvf-aamation-challenge-iframe")
-                            btn = frame.locator("button")
-                            await btn.first.wait_for(timeout=15000)
-                            text = await btn.first.inner_text()
+                            btn = frame.locator("button:has-text('Iniciar')")
+                            await btn.wait_for(timeout=30000)
+                            text = await btn.inner_text()
                             send_log(f"BTN => {text}")
-                            await btn.first.click(force=True)
+                            await btn.click(force=True)
                             send_log("✅ Puzzle iniciado")
-                            await page.wait_for_timeout(4000)
+                            await page.wait_for_timeout(5000)
                         except Exception as e:
                             send_log(f"❌ ORBIT START ERR => {e}")
                             await debug(page, "orbit_fail")
@@ -413,31 +414,29 @@ async def create_amazon():
 
                     
                     elif captcha_type == "CAPTCHA_CANVAS":
-                        pass
-                    else:
-                        send_log("⚠️ CAPTCHA desconocido")
-                        await debug(page, "captcha_unknown")
-                        return
-                        
-                if captcha_type == "CAPTCHA_ORBIT":
-                    send_log("🌀 Iniciando rompecabezas")
-                    try:
+                        send_log("🖼️ Canvas detectado")
+                        captcha_path = await capture_captcha(page)
+                        with open(captcha_path, "rb") as photo:
+                            bot.send_photo(
+                                CHAT_ID,
+                                photo,
+                                caption="Responde con los tiles. Ejemplo: 1 3 5"
+                            )
+                        response = await wait_captcha_response()
+                        if not response:
+                            send_log("❌ Sin respuesta captcha")
+                            return
+                        tiles = parse_tiles(response)
+                        send_log(f"🧩 Tiles: {tiles}")
+                        await solve_canvas_captcha(page, tiles)
                         await page.wait_for_timeout(5000)
-                        frame = page.frame_locator("#cvf-aamation-challenge-iframe")
-                        btn = frame.locator("button:has-text('Iniciar')")
-                        await btn.wait_for(timeout=30000)
-                        text = await btn.inner_text()
-                        send_log(f"BTN => {text}")
-                        await btn.click(force=True)
-                        send_log("✅ Puzzle iniciado")
-                        await page.wait_for_timeout(5000)
-                    except Exception as e:
-                        send_log(f"❌ ORBIT START ERR => {e}")
-                        await debug(page, "orbit_fail")
-                        return
-
-
+                        captcha_solved = True
+                        continue
+                        #return
                 
+
+
+                #######$$
                 elif state == "OTP_EMAIL":
                     if otp_handled:
                         await asyncio.sleep(2)
