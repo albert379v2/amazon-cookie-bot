@@ -305,29 +305,28 @@ async def create_amazon():
                 orbit_iframe = page.locator("#cvf-aamation-challenge-iframe")
                 if await orbit_iframe.count() > 0:
                     send_log("ORBIT DETECTADO")
-                    frame = page.frame_locator("#cvf-aamation-challenge-iframe")
-                    await page.wait_for_timeout(4000)
-                    try:
-                        body = frame.locator("body")
-                        text = await body.inner_text()
-                        send_log(f"🧠 ORBIT TEXT => {text[:2000]}")
-                        buttons = frame.locator("button")
-                        count = await buttons.count()
-                        send_log(f"🔘 BUTTON COUNT => {count}")
-                        if count > 0:
-                            texts = await buttons.all_inner_texts()
-                            send_log(f"🔘 BUTTON TEXTS => {texts}")
-                    except Exception as e:
-                        send_log(f"❌ ORBIT READ ERR => {e}")
-                    iframe = page.locator("#cvf-aamation-challenge-iframe")
-                    if await iframe.count() > 0:
-                        await iframe.screenshot(path="orbit.png")
-                        with open("orbit.png", "rb") as photo:
-                            bot.send_photo(
-                                CHAT_ID,
-                                photo,
-                                caption="Orbit detectado")
-                    return
+                    await page.wait_for_timeout(5000)
+                    found = False
+                    for frame in page.frames:
+                        try:
+                            buttons = frame.locator("button")
+                            count = await buttons.count()
+                            if count > 0:
+                                texts = await buttons.all_inner_texts()
+                                send_log(f"🔘 BUTTONS => {texts}")
+                                for i in range(count):
+                                    btn = buttons.nth(i)
+                                    text = (await btn.inner_text()).lower()
+                                    if "rompecabezas" in text or "iniciar" in text:
+                                        send_log(f"✅ CLICK BTN => {text}")
+                                        await btn.click(force=True)
+                                        found = True
+                                        break
+                            if found:
+                                break
+                        except Exception as e:
+                            send_log(f"FRAME ERR => {e}")
+                            #return
                 else:
                     send_log("CANVAS DETECTADO")
                     path = await capture_captcha(page)
