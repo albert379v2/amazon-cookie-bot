@@ -7,7 +7,9 @@ async def detect_state(page):
         return "SIGNIN"
 
     # REGISTER INTRO
-    if await page.locator("text=Proceder a crear una cuenta").count() > 0:
+    # REGISTER INTRO
+    text = (await page.locator("body").inner_text()).lower()
+    if "vamos a crear una cuenta" in text:
         return "REGISTER_INTRO"
 
     # DETECTAR PUZZLE INTERNO
