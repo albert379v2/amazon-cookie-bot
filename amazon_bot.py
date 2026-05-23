@@ -40,7 +40,7 @@ async def detect_canvas_captcha(page):
     if "elija todo" in text:
         return True
 
-    if "Resuelve esta adivinanza" in text:
+    if "resuelve esta adivinanza" in text:
         return True
 
     
