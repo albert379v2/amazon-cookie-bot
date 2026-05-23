@@ -260,6 +260,46 @@ async def create_amazon():
             send_log(page.url)
             await asyncio.sleep(5)
             await solve_captcha(page)
+            if await detect_canvas_captcha(page):
+                send_log("CAPTCHA DETECTADO")
+                text = (await page.locator("body").inner_text()).lower()
+                if "resuelve esta adivinanza" in text:
+                    send_log("ORBIT DETECTADO")
+                    iframe = page.locator("#cvf-aamation-challenge-iframe")
+                    if await iframe.count() > 0:
+                        await iframe.screenshot(path="orbit.png")
+                        with open("orbit.png", "rb") as photo:
+                            bot.send_photo(
+                                CHAT_ID,
+                                photo,
+                                caption="Orbit detectado")
+                    return
+                else:
+                    send_log("CANVAS DETECTADO")
+                    path = await capture_captcha(page)
+                    with open(path, "rb") as photo:
+                        bot.send_photo(CHAT_ID,
+                                       photo
+                                      )
+                    bot.send_message(
+                        CHAT_ID,
+                        "Responde con tiles.\nEjemplo: 1 3 5"
+                    )
+                    response = await wait_captcha_response()
+                    if not response:
+                        send_log("Timeout captcha")
+                        return
+                    tiles = parse_tiles(response)
+                    send_log(f"Tiles: {tiles}")
+                    await solve_canvas_captcha(page, tiles)
+                    send_log("Captcha resuelto")
+
+
+        
+
+            
+
+            
             send_log(page.url)
             send_log("E8 - captcha2")
             await debug(page, "captcha_final")
