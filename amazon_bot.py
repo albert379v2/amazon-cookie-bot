@@ -40,7 +40,7 @@ async def detect_canvas_captcha(page):
     if "elija todo" in text:
         return True
 
-    if "resuelve esta adivinanza" in text:
+    if "Resuelve esta adivinanza" in text:
         return True
 
     
@@ -392,51 +392,50 @@ async def create_amazon():
                     captcha_type = await detect_captcha_type(page)
                     send_log(f"🧠 CAPTCHA TYPE => {captcha_type}")
                     send_log(page.url)
-
-                    
                     if captcha_type == "CAPTCHA_ORBIT":
                         send_log("🌀 Iniciando rompecabezas")
-                        try:
-                            await page.wait_for_timeout(5000)
-                            frame = page.frame_locator("#cvf-aamation-challenge-iframe")
-                            btn = frame.locator("button:has-text('Iniciar')")
-                            await btn.wait_for(timeout=30000)
-                            text = await btn.inner_text()
-                            send_log(f"BTN => {text}")
-                            await btn.click(force=True)
-                            send_log("✅ Puzzle iniciado")
-                            await page.wait_for_timeout(5000)
-                        except Exception as e:
-                            send_log(f"❌ ORBIT START ERR => {e}")
+                        clicked = False
+                        for frame in page.frames:
+                            try:
+                                send_log(f"SEARCH FRAME => {frame.url}")
+                                btn = frame.locator("button").first
+                                await btn.wait_for(timeout=5000)
+                                text = await btn.inner_text()
+                                send_log(f"BTN => {text}")
+                                await btn.click(force=True)
+                                send_log("✅ Puzzle iniciado")
+                                clicked = True
+                                break
+                            except Exception as e:
+                                send_log(f"FRAME FAIL => {e}")
+                        if not clicked:
+                            send_log("❌ No se pudo iniciar rompecabezas")
                             await debug(page, "orbit_fail")
                             return
-
-
-                    
+                            
+                        await page.wait_for_timeout(2000)
                     elif captcha_type == "CAPTCHA_CANVAS":
-                        send_log("🖼️ Canvas detectado")
-                        captcha_path = await capture_captcha(page)
-                        with open(captcha_path, "rb") as photo:
-                            bot.send_photo(
-                                CHAT_ID,
-                                photo,
-                                caption="Responde con los tiles. Ejemplo: 1 3 5"
-                            )
-                        response = await wait_captcha_response()
-                        if not response:
-                            send_log("❌ Sin respuesta captcha")
-                            return
-                        tiles = parse_tiles(response)
-                        send_log(f"🧩 Tiles: {tiles}")
-                        await solve_canvas_captcha(page, tiles)
-                        await page.wait_for_timeout(5000)
-                        captcha_solved = True
-                        continue
-                        #return
+                        pass
+                    else:
+                        send_log("⚠️ CAPTCHA desconocido")
+                        await debug(page, "captcha_unknown")
+                        return
+                        
+                elif state == "CAPTCHA_ORBIT_GAME":
+                    send_log("🧠 Puzzle orbit abierto")
+                    try:
+                        iframe_element = page.frame_locator("#cvf-aamation-challenge-iframe")
+                        await page.wait_for_timeout(4000)
+                        body = iframe_element.locator("body")
+                        text = (await body.inner_text()).lower()
+                        send_log(f"📄 GAME TEXT => {text[:1000]}")
+                        await debug(page, "orbit_open")
+                    except Exception as e:
+                        send_log(f"❌ ORBIT ERR => {e}")
+                    return
+
+
                 
-
-
-                #######$$
                 elif state == "OTP_EMAIL":
                     if otp_handled:
                         await asyncio.sleep(2)
