@@ -424,6 +424,10 @@ async def create_amazon_account():
         await fill_registration_form(page)
         await submit_registration(page)
 
+        # Screenshot after form submission
+        await page.screenshot(path="after_submit.png", full_page=True)
+        send_photo_to_bot("after_submit.png", caption="📸 Después de enviar formulario")
+
         # Step 6: Handle post-submit captcha
         await asyncio.sleep(5)
         await solve_image_captcha(page)
@@ -441,8 +445,16 @@ async def create_amazon_account():
         # Step 9: Enter OTP
         await enter_otp(page, otp)
 
+        # Screenshot after OTP to verify success
+        await page.screenshot(path="after_otp.png", full_page=True)
+        send_photo_to_bot("after_otp.png", caption="📸 Después de ingresar OTP")
+
         # Step 10: Save session
         await save_session(context, email)
+
+        # Final screenshot after account created
+        await page.screenshot(path="account_created.png", full_page=True)
+        send_photo_to_bot("account_created.png", caption="✅ Cuenta creada - página final")
         send_log("✅ Account created successfully!")
         return True
 
