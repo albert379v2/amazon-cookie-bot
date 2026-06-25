@@ -8,8 +8,6 @@ import telebot
 # ========== ENV ==========
 TOKEN = os.getenv('BOT_TOKEN')
 CHAT_ID = int(os.getenv('CHAT_ID', 0))
-PROXY_USER = os.getenv('PROXY_USER', '')
-PROXY_PASS = os.getenv('PROXY_PASS', '')
 
 if not TOKEN:
     print("❌ BOT_TOKEN not found!"); exit(1)
@@ -25,9 +23,7 @@ class ProxyManager:
 
     def load_proxies(self):
         """Carga proxies desde proxies.txt (formato IP:PORT por línea)
-        You can use either HTTP proxies (recommended) or provide full URLs like
-        http://host:port or socks5://host:port. If you provide plain host:port
-        the manager will assume an HTTP proxy (http://host:port).
+        Webshare proxies format: IP:PORT (sin autenticación)
         """
         for fname in ['proxies.txt', 'proxy.txt', 'proxies_list.txt']:
             if os.path.exists(fname):
@@ -51,27 +47,20 @@ class ProxyManager:
         self.current = proxy
         return proxy
 
-    def get_socks5_url(self, proxy):
-        """Return a proxy URL for Playwright's proxy.server.
-
-        Behavior:
-        - If the proxy string already contains a scheme (http://, https://, socks5://, socks://)
-          it is returned unchanged.
-        - If the proxy string is just host:port (the common format in proxies.txt),
-          we default to using http://host:port (Chromium supports HTTP proxy auth).
-
-        Note: Chromium does not support SOCKS5 proxy authentication (username/password).
-        If you only have an authenticated SOCKS5 proxy, run a local wrapper (e.g. privoxy,
-        3proxy or an SSH tunnel) that exposes an HTTP proxy or an unauthenticated SOCKS5
-        that Chromium can use.
+    def get_proxy_url(self, proxy):
+        """Convierte proxy a URL para Playwright
+        
+        Para Webshare (IP:PORT):
+        - Si es plain IP:PORT → http://IP:PORT
+        - Si ya tiene scheme → devuelve como está
         """
         if not proxy:
             return None
         p = proxy.strip()
-        # If already has a scheme, return as-is
-        if p.startswith('http://') or p.startswith('https://') or p.startswith('socks5://') or p.startswith('socks://'):
+        # Si ya tiene scheme, retorna como está
+        if p.startswith(('http://', 'https://', 'socks5://', 'socks://')):
             return p
-        # Default to HTTP proxy for plain host:port entries
+        # Webshare: plain IP:PORT → HTTP proxy
         return f"http://{p}"
 
 proxy_manager = ProxyManager()
@@ -130,19 +119,9 @@ async def launch_browser(proxy_url=None):
 
     launch_opts = {"headless": True, "args": args}
 
-    # Playwright proxy should be a dict with server and optional username/password
     if proxy_url:
-        # If the proxy_url is a SOCKS scheme and credentials are set, warn the user
-        if proxy_url.startswith(('socks5://', 'socks://')) and PROXY_USER and PROXY_PASS:
-            send_log("❌ Chromium does not support SOCKS5 proxy authentication (user:pass).")
-            send_log("→ Use HTTP proxies or run a local wrapper that exposes an HTTP proxy that forwards to your SOCKS5.")
-            # Attempting to use an authenticated SOCKS5 will likely fail at browser launch, so raise early
-            raise RuntimeError("Chromium does not support authenticated SOCKS5 proxies. Use HTTP proxy or a local wrapper.")
-
+        # Proxy sin autenticación
         proxy_dict = {"server": proxy_url}
-        if PROXY_USER and PROXY_PASS:
-            proxy_dict["username"] = PROXY_USER
-            proxy_dict["password"] = PROXY_PASS
         launch_opts["proxy"] = proxy_dict
         send_log(f"🌐 Proxy: {proxy_url}")
     else:
@@ -193,7 +172,7 @@ async def run():
 
     # Obtener proxy aleatorio
     proxy = proxy_manager.get_random()
-    proxy_url = proxy_manager.get_socks5_url(proxy) if proxy else None
+    proxy_url = proxy_manager.get_proxy_url(proxy) if proxy else None
 
     send_log(f"🎯 Target: {email}")
     if proxy:
@@ -404,7 +383,7 @@ async def run():
 
             # Wait OTP
             send_log("⏳ STEP 7: Waiting OTP...")
-            bot.send_message(CHAT_ID, f"📩 Enter OTP for {email}:")
+            bot.send_message(CHAT_ID, f"��� Enter OTP for {email}:")
             otp = await wait_manual(timeout=180)
             if not otp:
                 send_log("❌ OTP timeout")
@@ -530,11 +509,12 @@ async def run():
 def cmd_start(m):
     bot.reply_to(m, 
         "🤖 Proton Bot\n\n"
-        "📋 Variables de entorno:\n"
-        "PROXY_USER=usuario\n"
-        "PROXY_PASS=contraseña\n\n"
+        "📋 Configuración:\n"
         "Crear archivo proxies.txt con:\n"
-        "HTTP proxy format: IP:PORT or http://IP:PORT (uno por línea)\n\n"
+        "Formato Webshare: IP:PORT (uno por línea)\n"
+        "Ejemplo:\n"
+        "192.168.1.1:8080\n"
+        "10.0.0.1:3128\n\n"
         "/crear - Crear cuenta con proxy aleatorio"
     )
 
