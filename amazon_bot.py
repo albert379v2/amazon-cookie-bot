@@ -5,6 +5,7 @@ import random
 from playwright.async_api import async_playwright
 import telebot
 
+
 # ========== ENV ==========
 TOKEN = os.getenv('BOT_TOKEN')
 CHAT_ID = int(os.getenv('CHAT_ID', 0))
@@ -71,7 +72,7 @@ async def launch_browser():
 
     if PROXY_URL:
         launch_opts["proxy"] = {"server": PROXY_URL}
-        send_log(f"🌐 Proxy activo")
+        send_log("🌐 Proxy activo")
     else:
         send_log("⚠️ Sin proxy")
 
@@ -130,13 +131,10 @@ async def run():
         await page.screenshot(path="s01_nav.png", full_page=True)
         send_photo("s01_nav.png", "📸 STEP 1: Page loaded")
 
-        # 2. Username - MÉTODO IFRAME (Proton usa iframe para username)
+        # 2. Username - IFRAME
         send_log(f"📝 STEP 2: Fill username: {username}")
-
-        # Esperar a que cargue el iframe
         await asyncio.sleep(3)
 
-        # Buscar iframe del username
         iframes = await page.query_selector_all('iframe')
         send_log(f"🔍 Found {len(iframes)} iframes")
 
@@ -144,56 +142,45 @@ async def run():
         for i, iframe in enumerate(iframes):
             try:
                 frame = await iframe.content_frame()
-                if not frame:
-                    continue
-
-                # Buscar input en el iframe
+                if not frame: continue
                 inp = await frame.query_selector('input[type="text"], input#username, input[name="username"]')
                 if inp:
-                    send_log(f"✅ Username input found in iframe {i}")
+                    send_log(f"✅ Username input in iframe {i}")
                     await human_type(frame, 'input', username)
                     await asyncio.sleep(1)
-
-                    # Verificar que se escribió
                     val = await inp.input_value()
                     if val == username:
-                        send_log(f"✅ Username filled via iframe: {val}")
                         username_filled = True
+                        send_log(f"✅ Username filled: {val}")
                         break
             except Exception as e:
-                send_log(f"⚠️ Iframe {i} failed: {e}")
+                send_log(f"⚠️ Iframe {i}: {e}")
 
-        # Fallback: JS directo en main frame
+        # Fallback JS
         if not username_filled:
-            send_log("📝 Trying JS fallback for username...")
+            send_log("📝 JS fallback...")
             try:
                 result = await page.evaluate(f"""() => {{
-                    const el = document.querySelector('input#username') || 
-                               document.querySelector('input[name="username"]') ||
-                               document.querySelector('iframe')?.contentDocument?.querySelector('input');
+                    const el = document.querySelector('input#username') || document.querySelector('input[name="username"]');
                     if (!el) return 'not_found';
                     const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
-                    if (desc && desc.set) {{
-                        desc.set.call(el, '{username}');
-                    }} else {{
-                        el.value = '{username}';
-                    }}
+                    if (desc && desc.set) desc.set.call(el, '{username}');
+                    else el.value = '{username}';
                     el.dispatchEvent(new Event('input', {{bubbles: true}}));
                     el.dispatchEvent(new Event('change', {{bubbles: true}}));
                     el.dispatchEvent(new KeyboardEvent('keyup', {{bubbles: true}}));
                     return el.value;
                 }}""")
-                send_log(f"✅ Username JS result: {result}")
                 username_filled = (result == username)
+                send_log(f"✅ JS result: {result}")
             except Exception as e:
-                send_log(f"❌ JS fallback failed: {e}")
+                send_log(f"❌ JS failed: {e}")
 
         await asyncio.sleep(2)
         await page.screenshot(path="s02_user.png", full_page=True)
         send_photo("s02_user.png", f"📸 STEP 2: Username filled={username_filled}")
-
         if not username_filled:
-            send_log("❌ Could not fill username")
+            send_log("❌ Username failed")
             return
 
         # 3. Password
@@ -205,10 +192,10 @@ async def run():
             await asyncio.sleep(1)
             send_log("✅ Password filled")
         except Exception as e:
-            send_log(f"⚠️ Password fill issue: {e}")
+            send_log(f"⚠️ Password: {e}")
 
         await page.screenshot(path="s03_pass.png", full_page=True)
-        send_photo("s03_pass.png", "📸 STEP 3: Password filled")
+        send_photo("s03_pass.png", "📸 STEP 3: Password")
 
         # 4. Submit
         send_log("📝 STEP 4: Click submit")
@@ -220,41 +207,37 @@ async def run():
                 btn = await page.query_selector(f'button:has-text("{btn_text}")')
                 if btn:
                     await human_click(page, f'button:has-text("{btn_text}")')
-                    send_log(f"✅ Clicked: {btn_text}")
                     submit_clicked = True
+                    send_log(f"✅ Clicked: {btn_text}")
                     break
-            except:
-                pass
+            except: pass
 
         if not submit_clicked:
             try:
                 await page.click('button[type="submit"]')
                 submit_clicked = True
-                send_log("✅ Clicked submit button")
-            except:
-                pass
+                send_log("✅ Clicked submit")
+            except: pass
 
         await asyncio.sleep(5)
         await page.screenshot(path="s04_submit.png", full_page=True)
-        send_photo("s04_submit.png", f"📸 STEP 4: Submit clicked={submit_clicked}")
+        send_photo("s04_submit.png", f"📸 STEP 4: Submit={submit_clicked}")
 
         # 5. Upsell
         send_log("🛒 STEP 5: Check upsell")
         await asyncio.sleep(3)
-
         for btn_text in ["No, thanks", "No, gracias", "Continue with free", "Get free"]:
             try:
                 btn = await page.query_selector(f'button:has-text("{btn_text}")')
                 if btn and await btn.is_visible():
                     await human_click(page, f'button:has-text("{btn_text}")')
-                    send_log(f"✅ Upsell skipped: {btn_text}")
+                    send_log(f"✅ Upsell: {btn_text}")
                     break
-            except:
-                pass
+            except: pass
 
         await asyncio.sleep(3)
         await page.screenshot(path="s05_upsell.png", full_page=True)
-        send_photo("s05_upsell.png", "📸 STEP 5: After upsell")
+        send_photo("s05_upsell.png", "📸 STEP 5: Upsell")
 
         # 6. Verification
         send_log("🔐 STEP 6: Check verification")
@@ -267,31 +250,79 @@ async def run():
                    !!document.querySelector('input[type="email"]');
         }""")
 
-        if has_verify:
-            send_log("📧 Verification required")
+        if not has_verify:
+            send_log("✅ No verification needed")
+        else:
+            send_log("📧 Verification detected")
 
             # Click email tab
             try:
                 await human_click(page, 'button:has-text("Email")')
                 await asyncio.sleep(2)
-            except:
-                pass
+            except: pass
 
             # Fill verification email
             try:
                 await human_type(page, 'input[type="email"]', email)
                 await asyncio.sleep(1)
-                await human_click(page, 'button:has-text("Send")')
-                send_log("📧 Code sent")
-            except:
+                send_log("✅ Verification email filled")
+            except Exception as e:
+                send_log(f"⚠️ Email fill: {e}")
+
+            await page.screenshot(path="s06_email.png", full_page=True)
+            send_photo("s06_email.png", "📸 STEP 6: Email filled")
+
+            # CLICK BOTÓN OBTENER CÓDIGO - CORREGIDO
+            send_log("📝 Clicking 'Obtener código de verificación'...")
+            code_sent = False
+
+            # Intentar múltiples selectores para el botón
+            selectors = [
+                'button:has-text("Obtener código de verificación")',
+                'button:has-text("Obtener código")',
+                'button:has-text("Get verification code")',
+                'button:has-text("Send code")',
+                'button:has-text("Enviar código")',
+                'button[type="submit"]',
+            ]
+
+            for sel in selectors:
                 try:
-                    await human_click(page, 'button:has-text("Enviar")')
-                except:
-                    pass
+                    btn = await page.query_selector(sel)
+                    if btn and await btn.is_visible():
+                        txt = await btn.inner_text()
+                        await human_click(page, sel)
+                        code_sent = True
+                        send_log(f"✅ Clicked: {txt.strip()}")
+                        break
+                except: pass
+
+            # JS fallback
+            if not code_sent:
+                try:
+                    r = await page.evaluate("""() => {
+                        const btns = Array.from(document.querySelectorAll('button'));
+                        const b = btns.find(x => {
+                            const t = x.innerText.trim().toLowerCase();
+                            return t.includes('obtener') && t.includes('código') ||
+                                   t.includes('get') && t.includes('code') ||
+                                   t.includes('send') && t.includes('code');
+                        });
+                        if (b) { b.click(); return 'clicked: ' + b.innerText.trim(); }
+                        return 'not_found';
+                    }""")
+                    send_log(f"JS button: {r}")
+                    code_sent = ('not_found' not in r)
+                except Exception as e:
+                    send_log(f"JS fallback failed: {e}")
 
             await asyncio.sleep(3)
-            await page.screenshot(path="s06_verify.png", full_page=True)
-            send_photo("s06_verify.png", "📸 STEP 6: Verification email sent")
+            await page.screenshot(path="s06_code_sent.png", full_page=True)
+            send_photo("s06_code_sent.png", f"📸 STEP 6: Code sent={code_sent}")
+
+            if not code_sent:
+                send_log("❌ Could not click send code button")
+                return
 
             # Wait OTP
             send_log("⏳ STEP 7: Waiting OTP...")
@@ -301,23 +332,73 @@ async def run():
                 send_log("❌ OTP timeout")
                 return
 
-            send_log(f"🔢 OTP received: {otp}")
-            await human_type(page, 'input[type="text"]', otp)
+            send_log(f"🔢 OTP: {otp}")
+
+            # Find OTP input - multiple selectors
+            otp_input_found = False
+            otp_selectors = [
+                'input[type="text"]',
+                'input[placeholder*="código" i]',
+                'input[placeholder*="code" i]',
+                'input[maxlength="6"]',
+                'input[data-testid*="verification" i]',
+                'input[data-testid*="input" i]',
+            ]
+
+            for sel in otp_selectors:
+                try:
+                    inp = await page.query_selector(sel)
+                    if inp and await inp.is_visible():
+                        await human_type(page, sel, otp)
+                        otp_input_found = True
+                        send_log(f"✅ OTP filled via: {sel}")
+                        break
+                except: pass
+
+            # JS fallback for OTP
+            if not otp_input_found:
+                try:
+                    await page.evaluate(f"""() => {{
+                        const inputs = Array.from(document.querySelectorAll('input'));
+                        const inp = inputs.find(x => x.type === 'text' && (x.placeholder || '').toLowerCase().includes('código')) ||
+                                     inputs.find(x => x.type === 'text');
+                        if (inp) {{
+                            inp.value = '{otp}';
+                            inp.dispatchEvent(new Event('input', {{bubbles: true}}));
+                            inp.dispatchEvent(new Event('change', {{bubbles: true}}));
+                            return 'filled';
+                        }}
+                        return 'not_found';
+                    }}""")
+                    otp_input_found = True
+                    send_log("✅ OTP filled via JS")
+                except: pass
+
+            if not otp_input_found:
+                send_log("❌ Could not find OTP input")
+                return
+
             await asyncio.sleep(1)
 
-            try:
-                await human_click(page, 'button:has-text("Verify")')
-            except:
+            # Click verify
+            verify_clicked = False
+            for sel in ['button:has-text("Verify")', 'button:has-text("Verificar")', 'button[type="submit"]']:
                 try:
-                    await human_click(page, 'button:has-text("Verificar")')
-                except:
-                    await page.keyboard.press('Enter')
+                    btn = await page.query_selector(sel)
+                    if btn and await btn.is_visible():
+                        await human_click(page, sel)
+                        verify_clicked = True
+                        send_log(f"✅ Clicked verify")
+                        break
+                except: pass
+
+            if not verify_clicked:
+                await page.keyboard.press('Enter')
+                send_log("✅ Pressed Enter")
 
             await asyncio.sleep(5)
             await page.screenshot(path="s07_otp.png", full_page=True)
             send_photo("s07_otp.png", "📸 STEP 7: OTP entered")
-        else:
-            send_log("✅ No verification needed")
 
         # 8. Success check
         send_log("🔍 STEP 8: Check success")
@@ -348,7 +429,7 @@ async def run():
             send_log(f"✅ DONE: {email}")
         else:
             with open("s08_final.png", "rb") as f:
-                bot.send_photo(CHAT_ID, f, caption="❌ Failed - check screenshot")
+                bot.send_photo(CHAT_ID, f, caption="❌ Failed")
             send_log("❌ Failed")
 
     except Exception as e:
@@ -360,8 +441,7 @@ async def run():
                 await page.screenshot(path="error.png", full_page=True)
                 with open("error.png", "rb") as f:
                     bot.send_photo(CHAT_ID, f, caption=f"❌ Error: {str(e)[:200]}")
-        except:
-            pass
+        except: pass
     finally:
         if browser: await browser.close()
         if pw: await pw.stop()
@@ -389,3 +469,4 @@ if __name__ == "__main__":
     import time
     while True:
         time.sleep(1)
+        
