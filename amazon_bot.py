@@ -50,8 +50,8 @@ class ProxyManager:
     def get_socks5_url(self, proxy):
         """Construye URL socks5://user:pass@ip:port"""
         if not PROXY_USER or not PROXY_PASS:
-            return f"socks5://{proxy}"
-        return f"socks5://{PROXY_USER}:{PROXY_PASS}@{proxy}"
+            return f"http://{proxy}"
+        return f"http://{PROXY_USER}:{PROXY_PASS}@{proxy}"
 
 proxy_manager = ProxyManager()
 
