@@ -5,16 +5,55 @@ import random
 from playwright.async_api import async_playwright
 import telebot
 
-
 # ========== ENV ==========
 TOKEN = os.getenv('BOT_TOKEN')
 CHAT_ID = int(os.getenv('CHAT_ID', 0))
-PROXY_URL = os.getenv('PROXY_URL', '')
+PROXY_USER = os.getenv('PROXY_USER', '')
+PROXY_PASS = os.getenv('PROXY_PASS', '')
 
 if not TOKEN:
     print("❌ BOT_TOKEN not found!"); exit(1)
 
 bot = telebot.TeleBot(TOKEN)
+
+# ========== PROXY MANAGER ==========
+class ProxyManager:
+    def __init__(self):
+        self.proxies = []
+        self.current = None
+        self.load_proxies()
+
+    def load_proxies(self):
+        """Carga proxies desde proxies.txt (formato IP:PORT por línea)"""
+        for fname in ['proxies.txt', 'proxy.txt', 'proxies_list.txt']:
+            if os.path.exists(fname):
+                with open(fname, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and ':' in line and not line.startswith('#'):
+                            self.proxies.append(line)
+                print(f"✅ {len(self.proxies)} proxies cargados desde {fname}")
+                return
+        print("⚠️ No proxies.txt found")
+
+    def get_random(self):
+        """Devuelve proxy aleatorio diferente al último usado"""
+        if not self.proxies:
+            return None
+        available = [p for p in self.proxies if p != self.current]
+        if not available:
+            available = self.proxies
+        proxy = random.choice(available)
+        self.current = proxy
+        return proxy
+
+    def get_socks5_url(self, proxy):
+        """Construye URL socks5://user:pass@ip:port"""
+        if not PROXY_USER or not PROXY_PASS:
+            return f"socks5://{proxy}"
+        return f"socks5://{PROXY_USER}:{PROXY_PASS}@{proxy}"
+
+proxy_manager = ProxyManager()
 
 # ========== UTILS ==========
 def send_log(msg):
@@ -52,11 +91,11 @@ async def wait_manual(timeout=180):
 # ========== EMAIL ==========
 def gen_email():
     names = ["alex", "maria", "carlos", "anna", "jose", "luis", "dani"]
-    domains = ["mailgrid.shop", "mailgrid.shop", "mailgrid.shop"]
+    domains = ["mailgrid.shop", "tempmailo.com", "mail.tm"]
     return f"{random.choice(names)}{random.randint(1000,9999)}@{random.choice(domains)}"
 
 # ========== BROWSER ==========
-async def launch_browser():
+async def launch_browser(proxy_url=None):
     args = [
         "--disable-blink-features=AutomationControlled",
         "--disable-dev-shm-usage",
@@ -70,9 +109,9 @@ async def launch_browser():
 
     launch_opts = {"headless": True, "args": args}
 
-    if PROXY_URL:
-        launch_opts["proxy"] = {"server": PROXY_URL}
-        send_log("🌐 Proxy activo")
+    if proxy_url:
+        launch_opts["proxy"] = {"server": proxy_url}
+        send_log(f"🌐 Proxy: {proxy_url.split('@')[1] if '@' in proxy_url else proxy_url}")
     else:
         send_log("⚠️ Sin proxy")
 
@@ -118,11 +157,18 @@ async def run():
     email = gen_email()
     pwd = "Admin.2026.!"
     username = email.split('@')[0]
+
+    # Obtener proxy aleatorio
+    proxy = proxy_manager.get_random()
+    proxy_url = proxy_manager.get_socks5_url(proxy) if proxy else None
+
     send_log(f"🎯 Target: {email}")
+    if proxy:
+        send_log(f"🌐 Using proxy: {proxy}")
 
     pw = browser = ctx = page = None
     try:
-        pw, browser, ctx, page = await launch_browser()
+        pw, browser, ctx, page = await launch_browser(proxy_url)
 
         # 1. Navegar
         send_log("🚀 STEP 1: Navigate to Proton")
@@ -272,11 +318,10 @@ async def run():
             await page.screenshot(path="s06_email.png", full_page=True)
             send_photo("s06_email.png", "📸 STEP 6: Email filled")
 
-            # CLICK BOTÓN OBTENER CÓDIGO - CORREGIDO
-            send_log("📝 Clicking 'Obtener código de verificación'...")
+            # CLICK BOTÓN OBTENER CÓDIGO
+            send_log("📝 Clicking send code button...")
             code_sent = False
 
-            # Intentar múltiples selectores para el botón
             selectors = [
                 'button:has-text("Obtener código de verificación")',
                 'button:has-text("Obtener código")',
@@ -334,7 +379,7 @@ async def run():
 
             send_log(f"🔢 OTP: {otp}")
 
-            # Find OTP input - multiple selectors
+            # Find OTP input
             otp_input_found = False
             otp_selectors = [
                 'input[type="text"]',
@@ -355,7 +400,7 @@ async def run():
                         break
                 except: pass
 
-            # JS fallback for OTP
+            # JS fallback
             if not otp_input_found:
                 try:
                     await page.evaluate(f"""() => {{
@@ -388,7 +433,7 @@ async def run():
                     if btn and await btn.is_visible():
                         await human_click(page, sel)
                         verify_clicked = True
-                        send_log(f"✅ Clicked verify")
+                        send_log("✅ Clicked verify")
                         break
                 except: pass
 
@@ -450,7 +495,15 @@ async def run():
 # ========== TELEGRAM ==========
 @bot.message_handler(commands=['start'])
 def cmd_start(m):
-    bot.reply_to(m, "🤖 Proton Bot\n/crear - Crear cuenta")
+    bot.reply_to(m, 
+        "🤖 Proton Bot\n\n"
+        "📋 Variables de entorno:\n"
+        "PROXY_USER=usuario\n"
+        "PROXY_PASS=contraseña\n\n"
+        "Crear archivo proxies.txt con:\n"
+        "IP:PORT (uno por línea)\n\n"
+        "/crear - Crear cuenta con proxy aleatorio"
+    )
 
 @bot.message_handler(commands=['crear'])
 def cmd_crear(m):
@@ -469,4 +522,3 @@ if __name__ == "__main__":
     import time
     while True:
         time.sleep(1)
-        
