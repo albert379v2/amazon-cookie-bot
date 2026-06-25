@@ -48,10 +48,14 @@ class ProxyManager:
         return proxy
 
     def get_socks5_url(self, proxy):
-        """Construye URL socks5://user:pass@ip:port"""
-        if not PROXY_USER or not PROXY_PASS:
-            return f"http://{proxy}"
-        return f"http://{PROXY_USER}:{PROXY_PASS}@{proxy}"
+        """Construye URL socks5://ip:port (Playwright acepta server with scheme). We keep credentials
+        separate and pass them to Playwright's proxy dict (username/password) rather than embedding
+        them into the URL, which some platforms don't parse correctly.
+        """
+        if not proxy:
+            return None
+        # Always return socks5 scheme (change to http:// if you really have HTTP proxies)
+        return f"socks5://{proxy}"
 
 proxy_manager = ProxyManager()
 
@@ -109,9 +113,14 @@ async def launch_browser(proxy_url=None):
 
     launch_opts = {"headless": True, "args": args}
 
+    # Playwright proxy should be a dict with server and optional username/password
     if proxy_url:
-        launch_opts["proxy"] = {"server": proxy_url}
-        send_log(f"🌐 Proxy: {proxy_url.split('@')[1] if '@' in proxy_url else proxy_url}")
+        proxy_dict = {"server": proxy_url}
+        if PROXY_USER and PROXY_PASS:
+            proxy_dict["username"] = PROXY_USER
+            proxy_dict["password"] = PROXY_PASS
+        launch_opts["proxy"] = proxy_dict
+        send_log(f"🌐 Proxy: {proxy_url}")
     else:
         send_log("⚠️ Sin proxy")
 
