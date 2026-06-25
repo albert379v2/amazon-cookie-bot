@@ -101,7 +101,7 @@ async def wait_manual(timeout=180):
 # ========== EMAIL ==========
 def gen_email():
     names = ["alex", "maria", "carlos", "anna", "jose", "luis", "dani"]
-    domains = ["mailgrid.shop", "tempmailo.com", "mail.tm"]
+    domains = ["mailgrid.shop", "mailgrid.shop", "mailgrid.shop"]
     return f"{random.choice(names)}{random.randint(1000,9999)}@{random.choice(domains)}"
 
 # ========== BROWSER ==========
